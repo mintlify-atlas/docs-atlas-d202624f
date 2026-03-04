@@ -34,6 +34,19 @@ Scira's API consists of the following main endpoints:
 
 - **POST /lookout** - Create and manage scheduled research agents (Pro only)
 
+### File & Media Endpoints
+
+- **POST /upload** - Upload files (images, PDFs) for context-aware search
+- **POST /transcribe** - Transcribe audio to text using ElevenLabs
+
+### Export Endpoints
+
+- **POST /export/pdf** - Export search results as PDF
+
+### Advanced Search
+
+- **POST /xql** - X Query Language for advanced X/Twitter searches (Pro only)
+
 ## Authentication
 
 Scira uses session-based authentication powered by better-auth. API requests must include valid session cookies obtained through the authentication flow.

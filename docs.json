@@ -76,6 +76,7 @@
               "api/authentication",
               "api/search",
               "api/lookout",
+              "api/files",
               "api/rate-limits"
             ]
           }
