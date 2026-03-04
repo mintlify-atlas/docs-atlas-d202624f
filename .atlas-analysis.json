@@ -1,0 +1,89 @@
+{
+  "projectType": "saas",
+  "projectName": "Scira",
+  "projectDescription": "An agentic AI-powered research platform that plans, retrieves, and cites sources for fast, grounded answers.",
+  "theme": "palm",
+  "primaryColor": "#d0a47d",
+  "lightColor": "#9ebade",
+  "darkColor": "#4a5971",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": [
+              "introduction",
+              "quickstart",
+              "how-it-works"
+            ]
+          },
+          {
+            "group": "Features",
+            "pages": [
+              "features/overview",
+              "features/search-modes",
+              "features/tools",
+              "features/ai-models",
+              "features/lookouts"
+            ]
+          },
+          {
+            "group": "Guides",
+            "pages": [
+              "guides/self-hosting",
+              "guides/deployment",
+              "guides/configuration",
+              "guides/environment-variables",
+              "guides/authentication"
+            ]
+          },
+          {
+            "group": "Integrations",
+            "pages": [
+              "integrations/overview",
+              "integrations/connectors",
+              "integrations/memory"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "groups": [
+          {
+            "group": "API",
+            "pages": [
+              "api/overview",
+              "api/authentication",
+              "api/search",
+              "api/lookout",
+              "api/rate-limits"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "Agentic planning with multi-step workflows",
+    "17 specialized search modes (Web, Academic, X, Reddit, GitHub, etc.)",
+    "28 integrated tools for search, financial data, maps, and more",
+    "Grounded retrieval with inline citations",
+    "Support for 100+ AI models (xAI, OpenAI, Anthropic, Google, etc.)",
+    "Lookouts for scheduled recurring research",
+    "Voice mode with real-time conversational AI",
+    "Personal memory companion",
+    "Connectors for Google Drive, Notion, OneDrive"
+  ],
+  "publicApiSurface": [
+    "POST /api/search - Create new search",
+    "GET /api/search/[id]/stream - Stream search results",
+    "POST /api/lookout - Create scheduled lookout",
+    "POST /api/upload - Upload files for analysis",
+    "POST /api/transcribe - Transcribe audio",
+    "POST /api/export/pdf - Export search to PDF",
+    "POST /api/xql - X Query Language search"
+  ]
+}
