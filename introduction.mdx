@@ -1,0 +1,231 @@
+---
+title: Welcome to Scira
+description: Research at the speed of thought with an agentic AI platform that plans, retrieves, and cites sources
+mode: custom
+---
+
+<div className="relative overflow-hidden dark:bg-[#0f1117] bg-white py-20">
+  <div className="absolute inset-0 bg-gradient-to-br from-[#d0a47d]/10 via-transparent to-[#9ebade]/10" />
+  
+  <div className="relative max-w-7xl mx-auto px-6 lg:px-8">
+    <div className="grid lg:grid-cols-12 gap-12 items-center">
+      <div className="lg:col-span-7 space-y-8">
+        <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold dark:text-gray-100 text-gray-900 leading-tight">
+          Research at the speed of thought
+        </h1>
+        
+        <p className="text-lg sm:text-xl dark:text-gray-400 text-gray-600 max-w-2xl">
+          Scira is an agentic AI-powered research platform that plans, retrieves, and cites — so you can think faster. Get grounded answers with inline citations from 17 specialized search modes and 100+ AI models.
+        </p>
+        
+        <div className="flex flex-wrap gap-4">
+          <a 
+            href="/quickstart" 
+            className="inline-flex items-center px-6 py-3 rounded-lg bg-[#d0a47d] text-white font-semibold hover:bg-[#b88d67] transition-colors"
+          >
+            Get started
+            <svg className="ml-2 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+            </svg>
+          </a>
+          
+          <a 
+            href="/features/overview" 
+            className="inline-flex items-center px-6 py-3 rounded-lg border dark:border-[#27272a] border-gray-200 dark:bg-white/5 bg-gray-50 dark:text-gray-100 text-gray-900 font-semibold dark:hover:bg-white/10 hover:bg-gray-100 transition-colors"
+          >
+            Explore features
+          </a>
+        </div>
+      </div>
+      
+      <div className="lg:col-span-5 flex items-center justify-center">
+        <div className="relative w-full max-w-md">
+          <div className="absolute -inset-4 bg-gradient-to-r from-[#d0a47d] to-[#9ebade] rounded-2xl opacity-20 blur-2xl" />
+          <div className="relative dark:bg-[#1a1d27] bg-gray-50 rounded-2xl p-8 dark:border dark:border-[#27272a] border border-gray-200 shadow-2xl">
+            <div className="space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-[#d0a47d] flex items-center justify-center">
+                  <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                </div>
+                <div className="flex-1">
+                  <div className="h-3 dark:bg-[#242838] bg-gray-200 rounded w-3/4" />
+                </div>
+              </div>
+              
+              <div className="space-y-3 pl-13">
+                <div className="dark:bg-[#242838] bg-gray-100 rounded-lg p-3">
+                  <div className="h-2 dark:bg-[#0f1117] bg-gray-200 rounded w-full mb-2" />
+                  <div className="h-2 dark:bg-[#0f1117] bg-gray-200 rounded w-5/6" />
+                </div>
+                
+                <div className="flex gap-2">
+                  <div className="flex-1 dark:bg-[#242838] bg-gray-100 rounded-lg p-2">
+                    <div className="h-2 dark:bg-[#0f1117] bg-gray-200 rounded w-3/4" />
+                  </div>
+                  <div className="flex-1 dark:bg-[#242838] bg-gray-100 rounded-lg p-2">
+                    <div className="h-2 dark:bg-[#0f1117] bg-gray-200 rounded w-2/3" />
+                  </div>
+                </div>
+                
+                <div className="flex items-center gap-2 text-xs dark:text-gray-500 text-gray-400">
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" />
+                    <path fillRule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clipRule="evenodd" />
+                  </svg>
+                  <span>3 sources cited</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div className="mt-16 mb-16 max-w-5xl mx-auto px-6">
+  <div className="text-center mb-12">
+    <h2 className="text-3xl font-bold dark:text-white text-gray-900 mb-4">Quick start</h2>
+    <p className="text-base dark:text-gray-400 text-gray-600">Get started with Scira in minutes</p>
+  </div>
+
+  <Steps>
+    <Step title="Visit Scira">
+      Go to [scira.ai](https://scira.ai) and create an account. Sign up with GitHub, Google, or Twitter for instant access.
+    </Step>
+    
+    <Step title="Choose your search mode">
+      Select from 17 specialized search modes based on your research needs:
+      - **Web** for general internet searches
+      - **Academic** for research papers and scholarly sources
+      - **X** for real-time social media insights
+      - **Code** for programming documentation and examples
+      - **Extreme** for deep multi-source research
+      
+      Or let Scira automatically select the best mode for your query.
+    </Step>
+    
+    <Step title="Ask your question">
+      Type your question naturally. Scira's agentic planning will break complex queries into steps, search multiple sources, and synthesize a grounded answer with inline citations.
+      
+      <Accordion title="Example response">
+        Every answer includes:
+        - **Cited sources** you can click to verify
+        - **Multi-step reasoning** showing how Scira researched your question
+        - **Follow-up suggestions** to continue exploring
+      </Accordion>
+    </Step>
+    
+    <Step title="Explore advanced features">
+      - Upload PDFs or paste URLs for context-aware search
+      - Schedule **Lookouts** for recurring research that emails you updates
+      - Connect Google Drive, Notion, or OneDrive to search your own content
+      - Enable **Memory** to build a personal knowledge base
+    </Step>
+  </Steps>
+</div>
+
+<div className="mt-16 mb-16 max-w-5xl mx-auto px-6">
+  <div className="text-center mb-12">
+    <h2 className="text-3xl font-bold dark:text-white text-gray-900 mb-4">Explore by topic</h2>
+    <p className="text-base dark:text-gray-400 text-gray-600">Dive into Scira's capabilities</p>
+  </div>
+
+  <CardGroup cols={2}>
+    <Card title="Search modes" icon="magnifying-glass" href="/features/search-modes">
+      17 specialized modes for web, academic, social, financial, and media research
+    </Card>
+    
+    <Card title="AI models" icon="brain" href="/features/ai-models">
+      100+ models from xAI, OpenAI, Anthropic, Google, and more
+    </Card>
+    
+    <Card title="Tools & integrations" icon="puzzle-piece" href="/features/tools">
+      28 integrated tools for search, data, maps, weather, and productivity
+    </Card>
+    
+    <Card title="Lookouts" icon="clock" href="/features/lookouts">
+      Schedule recurring research agents that monitor topics and email updates
+    </Card>
+    
+    <Card title="Self-hosting" icon="server" href="/guides/self-hosting">
+      Deploy Scira on your own infrastructure with full control
+    </Card>
+    
+    <Card title="API reference" icon="code" href="/api/overview">
+      Integrate Scira's search capabilities into your applications
+    </Card>
+  </CardGroup>
+</div>
+
+<div className="mt-16 mb-16 max-w-5xl mx-auto px-6">
+  <div className="text-center mb-12">
+    <h2 className="text-3xl font-bold dark:text-white text-gray-900 mb-4">Key features</h2>
+  </div>
+
+  <div className="grid md:grid-cols-3 gap-6">
+    <div className="dark:bg-[#1a1d27] bg-gray-50 rounded-2xl p-6 dark:border dark:border-[#27272a] border border-gray-200">
+      <div className="w-12 h-12 rounded-xl bg-[#d0a47d]/10 flex items-center justify-center mb-4">
+        <svg className="w-6 h-6 text-[#d0a47d]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+        </svg>
+      </div>
+      <h3 className="text-lg font-semibold dark:text-white text-gray-900 mb-2">Agentic planning</h3>
+      <p className="text-sm dark:text-gray-400 text-gray-600">
+        Multi-step workflows that break complex questions into sub-tasks and execute them autonomously
+      </p>
+    </div>
+    
+    <div className="dark:bg-[#1a1d27] bg-gray-50 rounded-2xl p-6 dark:border dark:border-[#27272a] border border-gray-200">
+      <div className="w-12 h-12 rounded-xl bg-[#9ebade]/10 flex items-center justify-center mb-4">
+        <svg className="w-6 h-6 text-[#9ebade]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+        </svg>
+      </div>
+      <h3 className="text-lg font-semibold dark:text-white text-gray-900 mb-2">Grounded retrieval</h3>
+      <p className="text-sm dark:text-gray-400 text-gray-600">
+        Every answer includes inline citations you can click to verify the evidence yourself
+      </p>
+    </div>
+    
+    <div className="dark:bg-[#1a1d27] bg-gray-50 rounded-2xl p-6 dark:border dark:border-[#27272a] border border-gray-200">
+      <div className="w-12 h-12 rounded-xl bg-[#4a5971]/10 flex items-center justify-center mb-4">
+        <svg className="w-6 h-6 text-[#4a5971]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+        </svg>
+      </div>
+      <h3 className="text-lg font-semibold dark:text-white text-gray-900 mb-2">Extensible & open</h3>
+      <p className="text-sm dark:text-gray-400 text-gray-600">
+        AGPL-3.0 licensed. Self-host, bring your own models, and customize everything
+      </p>
+    </div>
+  </div>
+</div>
+
+<div className="mt-16 mb-16 max-w-5xl mx-auto px-6">
+  <div className="dark:bg-[#1a1d27] bg-gray-50 rounded-2xl p-8 dark:border dark:border-[#27272a] border border-gray-200 text-center">
+    <h2 className="text-2xl font-bold dark:text-white text-gray-900 mb-4">Ready to get started?</h2>
+    <p className="text-base dark:text-gray-400 text-gray-600 mb-6 max-w-2xl mx-auto">
+      Start researching faster with Scira today. Self-host your own instance or use the hosted version at scira.ai.
+    </p>
+    <div className="flex flex-wrap gap-4 justify-center">
+      <a 
+        href="/quickstart" 
+        className="inline-flex items-center px-6 py-3 rounded-lg bg-[#d0a47d] text-white font-semibold hover:bg-[#b88d67] transition-colors"
+      >
+        Get started
+      </a>
+      <a 
+        href="https://github.com/zaidmukaddam/scira" 
+        className="inline-flex items-center px-6 py-3 rounded-lg border dark:border-[#27272a] border-gray-200 dark:text-gray-100 text-gray-900 font-semibold hover:dark:bg-[#242838] hover:bg-gray-100 transition-colors"
+      >
+        <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
+          <path fillRule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" clipRule="evenodd" />
+        </svg>
+        View on GitHub
+      </a>
+    </div>
+  </div>
+</div>

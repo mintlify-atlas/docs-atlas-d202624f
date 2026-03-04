@@ -1,0 +1,284 @@
+---
+title: "Authentication"
+description: "Authenticate API requests to Scira"
+---
+
+## Overview
+
+Scira uses session-based authentication powered by [better-auth](https://better-auth.com), a flexible authentication library for Next.js applications. Authentication is required for most API operations and determines your rate limits and feature access.
+
+## Authentication Methods
+
+### Session Authentication
+
+Scira primarily uses cookie-based session authentication. When you sign in through the web interface, a secure session cookie is created that authenticates subsequent API requests.
+
+#### Supported OAuth Providers
+
+Scira supports authentication through multiple OAuth providers:
+
+- **GitHub** - Sign in with your GitHub account
+- **Google** - Sign in with your Google account  
+- **Twitter** - Sign in with your Twitter/X account
+- **Microsoft** - Sign in with your Microsoft account
+
+### Session Configuration
+
+The authentication system is configured with:
+
+```typescript
+{
+  rateLimit: {
+    max: 100,
+    window: 60  // seconds
+  },
+  trustedOrigins: [
+    'http://localhost:3000',
+    'https://scira.ai',
+    'https://www.scira.ai'
+  ]
+}
+```
+
+## Making Authenticated Requests
+
+### Using Session Cookies
+
+When making requests from a browser or client that supports cookies:
+
+```javascript
+fetch('https://scira.ai/api/search', {
+  method: 'POST',
+  credentials: 'include', // Include cookies
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({
+    messages: [{
+      id: 'msg-1',
+      role: 'user',
+      content: 'What is machine learning?',
+      parts: [{ type: 'text', text: 'What is machine learning?' }]
+    }],
+    model: 'scira-default',
+    group: 'research',
+    id: 'chat-123'
+  })
+})
+```
+
+### cURL Example
+
+For cURL requests, you need to first obtain and save the session cookie:
+
+```bash
+# First, authenticate and save cookies
+curl -c cookies.txt \
+  -X POST https://scira.ai/api/auth/session \
+  -H "Content-Type: application/json"
+
+# Then use the saved cookies for API requests
+curl -b cookies.txt \
+  -X POST https://scira.ai/api/search \
+  -H "Content-Type: application/json" \
+  -d '{
+    "messages": [{
+      "id": "msg-1",
+      "role": "user",
+      "content": "Explain quantum computing",
+      "parts": [{"type": "text", "text": "Explain quantum computing"}]
+    }],
+    "model": "scira-default",
+    "group": "research",
+    "id": "chat-456"
+  }'
+```
+
+## Authentication Levels
+
+Different features require different authentication levels:
+
+### Unauthenticated Access
+
+**Limits:**
+- 3 searches per 7 days
+- Basic models only
+- No access to Extreme Search mode
+- No access to Lookout (scheduled searches)
+
+**Rate Limited by:** IP address
+
+```typescript
+// Rate limiting for unauthenticated users
+const identifier = getClientIdentifier(req); // Uses x-forwarded-for or x-real-ip
+const { success, limit, reset } = await unauthenticatedRateLimit.limit(identifier);
+
+if (!success) {
+  return {
+    error: `You've reached the limit of ${limit} searches per day. 
+            Sign in for more searches or wait until ${new Date(reset).toLocaleString()}.`
+  };
+}
+```
+
+### Authenticated (Free)
+
+**Limits:**
+- 100 searches per day
+- Access to most models
+- Limited Extreme Search usage
+- Basic features
+
+**Requirements:**
+- Valid session cookie
+- Verified email address
+
+### Pro Subscription
+
+**Features:**
+- Unlimited searches
+- All premium models
+- Unlimited Extreme Search
+- Lookout (scheduled research agents)
+- Priority processing
+- No rate limits
+
+**Requirements:**
+- Active subscription through Polar or Dodo Payments
+- Valid session cookie
+
+## Authentication Headers
+
+### Required Headers
+
+All API requests should include:
+
+```http
+Content-Type: application/json
+Cookie: better-auth.session_token=<session-token>
+```
+
+### Optional Headers
+
+```http
+x-timezone: America/New_York  // User's timezone for scheduled searches
+```
+
+## Session Management
+
+### Getting Session Information
+
+To check your current session:
+
+```typescript
+const session = await auth.api.getSession(req);
+
+if (!session?.user) {
+  // Not authenticated
+} else {
+  // Authenticated - access user info
+  console.log(session.user.id);
+  console.log(session.user.email);
+}
+```
+
+### Session Validation
+
+Scira validates sessions on every request:
+
+1. Extracts session cookie from request
+2. Verifies session token with database
+3. Checks subscription status (for Pro features)
+4. Validates chat ownership (for chat-specific operations)
+
+## Subscription Status
+
+Pro features require an active subscription. The system checks both Polar and Dodo Payments subscriptions:
+
+```typescript
+// Check for active Polar subscription
+const polarActive = subscription.status === 'active' && 
+                    new Date(subscription.currentPeriodEnd) > now;
+
+// Check for active Dodo subscription  
+const dodoActive = dodoSubscription.status === 'active' &&
+                   (!dodoSubscription.currentPeriodEnd || 
+                    new Date(dodoSubscription.currentPeriodEnd) > now);
+
+const isProUser = polarActive || dodoActive;
+```
+
+## Error Responses
+
+### Authentication Errors
+
+**401 Unauthorized - Authentication Required**
+```json
+{
+  "error": {
+    "code": "unauthorized:auth",
+    "message": "Authentication required"
+  }
+}
+```
+
+**401 Unauthorized - Model Requires Authentication**
+```json
+{
+  "error": {
+    "code": "unauthorized:model",
+    "message": "scira-gpt5 requires authentication"
+  }
+}
+```
+
+**402 Payment Required - Pro Subscription Required**
+```json
+{
+  "error": {
+    "code": "upgrade_required:model",
+    "message": "scira-gpt5 requires a Pro subscription"
+  }
+}
+```
+
+**403 Forbidden - Chat Access Denied**
+```json
+{
+  "error": {
+    "code": "forbidden:chat",
+    "message": "This chat belongs to another user"
+  }
+}
+```
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Always use HTTPS in production">
+    Session cookies contain sensitive authentication tokens. Always use HTTPS to prevent token interception.
+  </Accordion>
+  
+  <Accordion title="Handle session expiration gracefully">
+    Sessions can expire. Implement proper error handling to redirect users to re-authenticate when receiving 401 errors.
+  </Accordion>
+  
+  <Accordion title="Store cookies securely">
+    If building a mobile or desktop app, ensure session cookies are stored in secure storage (Keychain, Android KeyStore, etc.).
+  </Accordion>
+  
+  <Accordion title="Validate subscription status before Pro features">
+    Check subscription status before attempting to use Pro-only features to provide better UX.
+  </Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Search API" icon="magnifying-glass" href="/api/search">
+    Start making search requests
+  </Card>
+  <Card title="Rate Limits" icon="gauge" href="/api/rate-limits">
+    Understand your usage limits
+  </Card>
+</CardGroup>

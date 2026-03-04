@@ -1,0 +1,261 @@
+---
+title: "Self-hosting"
+description: "Deploy Scira on your own infrastructure"
+---
+
+Scira is an open-source (AGPL-3.0) Next.js application that can be self-hosted on your own infrastructure. This guide will walk you through the process of setting up and running Scira locally or on your own servers.
+
+## Prerequisites
+
+Before you begin, ensure you have the following:
+
+- **Node.js 22 or higher** - Scira uses Node.js 22 with Alpine Linux
+- **PostgreSQL database** - Required for storing user data, chats, and sessions
+- **Redis** - Used for serverless caching and rate limiting (via Upstash)
+- **Package manager** - pnpm, npm, yarn, or bun
+- **API keys** - At minimum, you'll need:
+  - OpenAI API key (required)
+  - Anthropic API key (required)
+  - Exa API key (required for web search features)
+  - Other API keys depending on which features you want to enable
+
+## Installation
+
+<Steps>
+  <Step title="Clone the repository">
+    Clone the Scira repository to your local machine:
+
+    ```bash
+    git clone https://github.com/zaidmukaddam/scira.git
+    cd scira
+    ```
+  </Step>
+
+  <Step title="Install dependencies">
+    Install the required dependencies using your preferred package manager:
+
+    <CodeGroup>
+      ```bash npm
+      npm install
+      ```
+
+      ```bash yarn
+      yarn install
+      ```
+
+      ```bash pnpm
+      pnpm install
+      ```
+
+      ```bash bun
+      bun install
+      ```
+    </CodeGroup>
+  </Step>
+
+  <Step title="Configure environment variables">
+    Copy the example environment file and configure your API keys:
+
+    ```bash
+    cp .env.example .env.local
+    ```
+
+    Edit `.env.local` and add your API keys. See the [Environment Variables](/guides/environment-variables) guide for a complete reference.
+
+    <Warning>
+      Never commit your `.env.local` file to version control. It contains sensitive API keys and secrets.
+    </Warning>
+  </Step>
+
+  <Step title="Set up the database">
+    Scira uses Drizzle ORM with PostgreSQL. The database configuration is defined in `drizzle.config.ts`:
+
+    ```typescript
+    export default defineConfig({
+      schema: './lib/db/schema.ts',
+      out: './drizzle/migrations',
+      dialect: 'postgresql',
+      dbCredentials: {
+        url: process.env.DATABASE_URL!,
+      },
+    });
+    ```
+
+    Run database migrations:
+
+    ```bash
+    pnpm drizzle-kit push
+    ```
+  </Step>
+
+  <Step title="Start the development server">
+    Start the Next.js development server:
+
+    <CodeGroup>
+      ```bash npm
+      npm run dev
+      ```
+
+      ```bash yarn
+      yarn dev
+      ```
+
+      ```bash pnpm
+      pnpm dev
+      ```
+
+      ```bash bun
+      bun dev
+      ```
+    </CodeGroup>
+
+    The application will be available at `http://localhost:3000`.
+  </Step>
+</Steps>
+
+## Docker Setup
+
+Scira includes Docker support for containerized deployment.
+
+### Using Docker Compose (Recommended)
+
+The easiest way to run Scira with Docker is using Docker Compose:
+
+<Steps>
+  <Step title="Ensure Docker is installed">
+    Make sure you have Docker and Docker Compose installed on your system.
+  </Step>
+
+  <Step title="Create environment file">
+    Create a `.env` file based on `.env.example` with your API keys:
+
+    ```bash
+    cp .env.example .env
+    ```
+  </Step>
+
+  <Step title="Start the application">
+    Run the following command in the project root:
+
+    ```bash
+    docker compose up
+    ```
+
+    The application will be available at `http://localhost:3000`.
+  </Step>
+</Steps>
+
+The `docker-compose.yml` configuration:
+
+```yaml
+version: '3.8'
+
+services:
+  scira.app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - '3000:3000'
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - HOSTNAME=0.0.0.0
+    restart: unless-stopped
+```
+
+### Using Docker Directly
+
+You can also build and run the Docker image directly:
+
+<Steps>
+  <Step title="Create environment file">
+    Create a `.env` file based on `.env.example`:
+
+    ```bash
+    cp .env.example .env
+    ```
+  </Step>
+
+  <Step title="Build the Docker image">
+    ```bash
+    docker build -t scira.app .
+    ```
+  </Step>
+
+  <Step title="Run the container">
+    ```bash
+    docker run --env-file .env -p 3000:3000 scira.app
+    ```
+  </Step>
+</Steps>
+
+### Docker Image Details
+
+The Dockerfile uses a multi-stage build process:
+
+- **Base image**: Node.js 22 with Alpine Linux for minimal footprint
+- **Dependencies stage**: Installs all npm dependencies using pnpm
+- **Builder stage**: Builds the Next.js application
+- **Runtime stage**: Runs the application with a non-root user for security
+
+Key security features:
+- Runs as non-root user (`nextjs`)
+- Uses Alpine Linux for minimal attack surface
+- Includes only necessary files in final image
+- Uses Next.js output tracing to minimize image size
+
+## Database Setup
+
+Scira uses **Drizzle ORM** with **PostgreSQL** for data persistence.
+
+### Database Schema
+
+The database schema is defined in `lib/db/schema.ts` and includes tables for:
+
+- **Users** - User accounts and profiles
+- **Sessions** - Authentication sessions
+- **Accounts** - OAuth provider accounts
+- **Chats** - Chat conversations
+- **Messages** - Individual messages in chats
+- **Subscriptions** - User subscription data (Polar and Dodo Payments)
+- **Custom Instructions** - User-defined custom instructions
+- **User Preferences** - User settings and preferences
+- **Lookouts** - Scheduled research agents
+- **Usage tracking** - Extreme search and message usage
+
+### Running Migrations
+
+To apply database migrations:
+
+```bash
+pnpm drizzle-kit push
+```
+
+To generate new migrations after schema changes:
+
+```bash
+pnpm drizzle-kit generate
+```
+
+## Production Deployment
+
+<Warning>
+  For production deployments, ensure you:
+  - Use a production-grade PostgreSQL database
+  - Configure Redis for caching and rate limiting
+  - Set `NODE_ENV=production`
+  - Use strong secrets for `BETTER_AUTH_SECRET`
+  - Enable HTTPS/SSL
+  - Configure proper CORS origins
+  - Set up database backups
+</Warning>
+
+For detailed production deployment instructions, see the [Deployment](/guides/deployment) guide.
+
+## Next Steps
+
+- [Configure environment variables](/guides/environment-variables)
+- [Set up authentication providers](/guides/authentication)
+- [Configure application settings](/guides/configuration)
+- [Deploy to production](/guides/deployment)

@@ -1,0 +1,515 @@
+---
+title: "Lookouts"
+description: "Schedule recurring research agents to monitor topics and get email updates"
+---
+
+<Info>**Pro feature** - Lookouts require a Scira Pro subscription</Info>
+
+Lookouts are scheduled research agents that automatically run queries on a recurring basis. Each run creates a new chat with full research results and sends you an email summary—perfect for monitoring topics, tracking trends, and staying informed on areas that matter to you.
+
+## What are Lookouts?
+
+A Lookout is a scheduled research query that runs automatically based on a cron schedule. Think of it as setting up a recurring Google Alert, but powered by Scira's full AI research capabilities with deep analysis, citations, and multi-source synthesis.
+
+**Key characteristics:**
+- **Automated execution**: Runs on schedule without manual intervention
+- **Full research capability**: Uses Extreme search mode by default
+- **Email notifications**: Sends results summary to your inbox
+- **Chat history**: Each run creates a new chat you can review
+- **Run tracking**: View history of all executions with metrics
+
+## Use Cases
+
+### Market & Competitor Intelligence
+```
+Title: "Weekly AI Chip Market Analysis"
+Prompt: "Analyze latest developments in AI chip manufacturers, 
+including NVIDIA, AMD, Intel, and emerging players. Focus on 
+product announcements, market share, and analyst opinions."
+Frequency: Weekly (Monday 9 AM)
+```
+
+### Research Topic Monitoring
+```
+Title: "Daily Fusion Energy Updates"
+Prompt: "Latest developments in fusion energy research, 
+including breakthrough experiments, funding announcements, 
+and commercial progress."
+Frequency: Daily (8 AM)
+```
+
+### Industry Briefings
+```
+Title: "Monthly SaaS Trends Report"
+Prompt: "Comprehensive analysis of SaaS industry trends: 
+pricing models, emerging categories, M&A activity, and 
+market leaders. Include statistics and expert commentary."
+Frequency: Monthly (1st of month, 6 AM)
+```
+
+### Regulatory Tracking
+```
+Title: "EU AI Regulation Updates"
+Prompt: "Track EU AI Act implementation, new regulations, 
+compliance requirements, and enforcement actions. Include 
+official sources and legal expert analysis."
+Frequency: Weekly (Friday 5 PM)
+```
+
+### Executive Briefings
+```
+Title: "Daily Tech News Digest"
+Prompt: "Summarize top technology news: major product launches, 
+M&A, funding rounds, and industry shifts. Focus on enterprise 
+technology and AI developments."
+Frequency: Daily (weekdays, 7 AM)
+```
+
+## Creating a Lookout
+
+### Database Schema
+
+Lookouts are stored in the `lookout` table (`/lib/db/schema.ts:286`):
+
+```typescript
+export const lookout = pgTable('lookout', {
+  id: text('id').primaryKey(),
+  userId: text('user_id').notNull(),
+  title: text('title').notNull(),
+  prompt: text('prompt').notNull(),
+  frequency: text('frequency').notNull(),  // 'once', 'daily', 'weekly', 'monthly', 'yearly'
+  cronSchedule: text('cron_schedule').notNull(),
+  timezone: text('timezone').notNull().default('UTC'),
+  nextRunAt: timestamp('next_run_at').notNull(),
+  qstashScheduleId: text('qstash_schedule_id'),
+  status: text('status').notNull().default('active'),  // 'active', 'paused', 'archived', 'running'
+  lastRunAt: timestamp('last_run_at'),
+  lastRunChatId: text('last_run_chat_id'),
+  runHistory: json('run_history').default([]),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+})
+```
+
+### Frequency Options
+
+**Once**: Run one time at a specific date/time
+```typescript
+frequency: 'once'
+cronSchedule: '0 9 * * *'  // 9 AM UTC on next occurrence
+```
+
+**Daily**: Run every day at a specific time
+```typescript
+frequency: 'daily'
+cronSchedule: '0 8 * * *'  // 8 AM UTC every day
+```
+
+**Weekly**: Run on specific day(s) each week
+```typescript
+frequency: 'weekly'
+cronSchedule: '0 9 * * 1'  // 9 AM UTC every Monday
+// Or multiple days: '0 9 * * 1,3,5'  // Mon, Wed, Fri
+```
+
+**Monthly**: Run on specific day of month
+```typescript
+frequency: 'monthly'
+cronSchedule: '0 6 1 * *'  // 6 AM UTC on 1st of month
+```
+
+**Yearly**: Run once per year
+```typescript
+frequency: 'yearly'
+cronSchedule: '0 0 1 1 *'  // Midnight UTC on Jan 1st
+```
+
+### Cron Schedule Format
+
+Lookouts use standard cron syntax with timezone support:
+
+```
+┌───────────── minute (0-59)
+│ ┌───────────── hour (0-23)
+│ │ ┌───────────── day of month (1-31)
+│ │ │ ┌───────────── month (1-12)
+│ │ │ │ ┌───────────── day of week (0-6) (Sunday=0)
+│ │ │ │ │
+│ │ │ │ │
+* * * * *
+```
+
+**Examples:**
+```typescript
+'0 9 * * *'      // 9 AM every day
+'30 14 * * 1'    // 2:30 PM every Monday
+'0 0 1 * *'      // Midnight on 1st of every month
+'0 8 * * 1-5'    // 8 AM weekdays only
+'0 */6 * * *'    // Every 6 hours
+```
+
+**Timezone prefix:**
+```typescript
+cronSchedule: 'CRON_TZ=America/New_York 0 9 * * *'  // 9 AM Eastern
+cronSchedule: 'CRON_TZ=Europe/London 0 8 * * 1'     // 8 AM London time Monday
+```
+
+## How Lookouts Work
+
+### 1. Schedule Registration
+
+When you create a Lookout:
+1. Record is created in `lookout` table
+2. Cron schedule is registered with Upstash QStash
+3. QStash schedule ID is stored in `qstashScheduleId`
+4. Next run time is calculated and stored in `nextRunAt`
+
+### 2. Scheduled Execution
+
+At the scheduled time:
+1. **QStash triggers**: Sends POST request to `/api/lookout` endpoint
+2. **Pro verification**: Checks user has active Pro subscription
+3. **Status update**: Sets lookout status to `'running'`
+4. **Chat creation**: Generates new chat with title "Scheduled: {lookout.title}"
+5. **Research execution**: Runs Extreme search with the prompt
+
+### 3. Research Process
+
+The lookout endpoint (`/app/api/lookout/route.ts`) executes research using:
+
+**Model**: `scira-grok-4-fast-think` (Grok 4 with reasoning)
+
+**System prompt** (`/app/api/lookout/route.ts:200`):
+- 3-page research paper format
+- Mandatory citations for every claim
+- Markdown formatting required
+- Starts with "## Key Points" section
+- Deep analysis with multiple sources
+
+**Tool**: `extreme_search` tool only
+- Autonomous research planning
+- Multi-step web and X search
+- Code execution if needed
+- Chart generation support
+
+**Step limit**: Maximum 2 tool calls to prevent runaway costs
+
+### 4. Result Collection
+
+After research completes:
+1. **Message saving**: User message and assistant response saved to chat
+2. **Title generation**: AI generates descriptive title for the chat
+3. **Metrics tracking**:
+   ```typescript
+   runHistory.push({
+     runAt: string,          // ISO timestamp
+     chatId: string,         // Link to chat
+     status: 'success' | 'error' | 'timeout',
+     error?: string,         // Error message if failed
+     duration: number,       // Milliseconds
+     tokensUsed: number,     // Total tokens
+     searchesPerformed: number  // Extreme search count
+   })
+   ```
+4. **Extreme search usage**: Incremented in user's usage tracking
+
+### 5. Email Notification
+
+Email is sent using Resend (`/lib/email.ts`):
+
+**To**: User's registered email
+
+**Subject**: "Your Scira Lookout has completed: {title}"
+
+**Content**:
+- Lookout title
+- Research summary (first 2000 chars of response)
+- Link to full chat results
+- Run timestamp
+
+**Template**: React Email components for rich formatting
+
+### 6. Next Run Calculation
+
+For recurring lookouts (`frequency !== 'once'`):
+1. Parse cron schedule with `cron-parser`
+2. Calculate next occurrence from current time
+3. Update `nextRunAt` field
+4. Status returns to `'active'`
+
+For one-time lookouts:
+- Status set to `'paused'` after completion
+- Not automatically deleted (can be manually re-run)
+
+## Run History
+
+Each lookout maintains a complete run history stored as JSON:
+
+```typescript
+type RunHistoryEntry = {
+  runAt: string;              // ISO date string
+  chatId: string;             // Link to generated chat
+  status: 'success' | 'error' | 'timeout';
+  error?: string;             // Error message if failed
+  duration?: number;          // Execution time in milliseconds
+  tokensUsed?: number;        // Total tokens consumed
+  searchesPerformed?: number; // Number of extreme searches
+}
+```
+
+**Example run history:**
+```json
+[
+  {
+    "runAt": "2026-03-04T14:00:00.000Z",
+    "chatId": "01932e7d-8b5f-7890-1234-567890abcdef",
+    "status": "success",
+    "duration": 45230,
+    "tokensUsed": 12450,
+    "searchesPerformed": 1
+  },
+  {
+    "runAt": "2026-03-03T14:00:00.000Z",
+    "chatId": "01932a1b-2c3d-4e5f-6789-0abcdef12345",
+    "status": "success",
+    "duration": 38920,
+    "tokensUsed": 10230,
+    "searchesPerformed": 1
+  }
+]
+```
+
+## Status States
+
+Lookouts can be in one of four states:
+
+**active**
+- Scheduled and will run at next occurrence
+- Waiting for QStash trigger
+- Can be paused or archived
+
+**paused**
+- Temporarily disabled
+- Schedule still exists in QStash but won't execute
+- Can be resumed to active
+- One-time lookouts auto-pause after running
+
+**archived**
+- Soft-deleted
+- No longer shown in active list
+- Schedule removed from QStash
+- Can be permanently deleted
+
+**running**
+- Currently executing research
+- Temporary state during execution
+- Returns to active after completion
+- Prevents duplicate concurrent runs
+
+## Error Handling
+
+### Execution Errors
+
+If research fails (`/app/api/lookout/route.ts:544`):
+1. Error captured in `runHistory` with status `'error'`
+2. Duration recorded
+3. Status returns to `'active'` (will retry next scheduled time)
+4. No email sent on error
+
+### Timeout Handling
+
+Long-running research (>5 minutes):
+- QStash has built-in timeout
+- Status recorded as `'timeout'` in history
+- Lookout returns to active for next run
+
+### Subscription Lapses
+
+If user's Pro subscription expires:
+1. Lookout remains in database
+2. Execution fails Pro check (`/app/api/lookout/route.ts:133`)
+3. Returns 403 Forbidden
+4. Schedule remains in QStash (will retry)
+5. User must renew to resume execution
+
+## Best Practices
+
+### Prompt Design
+
+**Be specific about scope:**
+```
+Good: "Analyze top 5 AI image generators by user base, 
+feature set, and pricing. Include Reddit sentiment."
+
+Bad: "What's happening with AI art?"
+```
+
+**Include date context:**
+```
+Good: "Latest developments this week in renewable energy"
+Bad: "Renewable energy news"  // Will search without time context
+```
+
+**Request specific formats:**
+```
+Good: "Create comparison table of cloud providers with 
+pricing, features, and region availability"
+
+Bad: "Compare cloud providers"  // Less structured
+```
+
+**Specify sources when relevant:**
+```
+Good: "Track EU AI Act updates from official EU sources, 
+legal experts, and industry commentary"
+
+Bad: "AI regulation news"  // May miss authoritative sources
+```
+
+### Scheduling Strategy
+
+**Match frequency to update cadence:**
+- **Breaking news topics**: Daily or multiple times per day
+- **Research areas**: Weekly or bi-weekly
+- **Market reports**: Weekly or monthly
+- **Regulatory tracking**: Weekly or monthly
+
+**Consider timezone:**
+```typescript
+// Get briefing before work starts (8 AM local time)
+timezone: 'America/New_York'
+cronSchedule: 'CRON_TZ=America/New_York 0 8 * * 1-5'
+
+// End of day summary (6 PM local time)
+timezone: 'Europe/London'
+cronSchedule: 'CRON_TZ=Europe/London 0 18 * * *'
+```
+
+**Avoid overlapping schedules:**
+- Stagger multiple lookouts by at least 15 minutes
+- Prevents concurrent extreme searches hitting limits
+
+### Cost Management
+
+Lookouts use Extreme search by default, which:
+- Consumes more tokens than regular chat
+- Counts against Extreme search limit (Pro plan)
+- May incur API costs for search providers
+
+**Optimize costs:**
+- Use appropriate frequency (don't over-schedule)
+- Make prompts focused to avoid unnecessary searches
+- Monitor run history for token usage trends
+- Pause lookouts during periods you don't need updates
+
+## QStash Integration
+
+Lookouts use Upstash QStash for reliable scheduling:
+
+```typescript
+// From package.json:
+"@upstash/qstash": "^2.8.4"
+```
+
+**Features:**
+- Serverless cron scheduling
+- Automatic retries on failure
+- Timezone support
+- Delivery guarantees
+
+**Schedule management:**
+```typescript
+// Create schedule (pseudocode)
+const scheduleId = await qstash.schedule({
+  url: `${baseUrl}/api/lookout`,
+  cron: cronSchedule,
+  body: JSON.stringify({ lookoutId, prompt, userId })
+})
+
+// Delete schedule
+await qstash.schedules.delete(scheduleId)
+```
+
+## Email Integration
+
+Emails are sent using Resend API:
+
+```typescript
+// From package.json:
+"resend": "^6.6.0"
+"@react-email/components": "^1.0.1"
+```
+
+**Email template** (`/lib/email.ts`):
+- React Email components for rendering
+- Responsive HTML design
+- Plain text fallback
+- Direct link to chat results
+- Truncated summary (2000 chars max)
+
+## Technical Architecture
+
+**Request Flow:**
+```
+QStash (scheduled)
+  ↓
+POST /api/lookout
+  ↓
+1. Verify Pro subscription
+2. Set status to 'running'
+3. Create new chat
+4. Execute streamText with extreme_search
+5. Save messages and metrics
+6. Send email notification
+7. Calculate next run
+8. Return to 'active' status
+```
+
+**Dependencies:**
+```typescript
+// Key dependencies for lookout functionality:
+import { streamText, stepCountIs } from 'ai'
+import { extremeSearchTool } from '@/lib/tools'
+import { sendLookoutCompletionEmail } from '@/lib/email'
+import { CronExpressionParser } from 'cron-parser'
+import { updateLookoutLastRun, updateLookout } from '@/lib/db/queries'
+```
+
+**Model configuration:**
+```typescript
+model: scira.languageModel('scira-grok-4-fast-think')
+stopWhen: stepCountIs(2)  // Max 2 tool calls
+activeTools: ['extreme_search']
+toolChoice: 'auto'
+maxRetries: 10
+```
+
+## Limitations
+
+**Pro requirement**: Lookouts are only available to Pro subscribers
+
+**Execution limits**:
+- Maximum 2 tool calls per run (prevents runaway costs)
+- Extreme search usage counted against Pro limits
+- QStash timeout after extended execution
+
+**Frequency constraints**:
+- Minimum practical interval: ~15 minutes (QStash limitation)
+- Maximum history size: No hard limit but stored as JSON
+
+**Email delivery**:
+- Requires valid email on user account
+- Subject to Resend rate limits
+- No email sent on execution errors
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Extreme Search" icon="bolt" href="/features/search-modes#extreme">
+    Learn about the Extreme search mode used by Lookouts
+  </Card>
+  
+  <Card title="Tools" icon="wrench" href="/features/tools#extreme-search">
+    Deep dive into the extreme_search tool
+  </Card>
+</CardGroup>

@@ -1,0 +1,431 @@
+---
+title: "Rate Limits"
+description: "API rate limiting and quotas for Scira"
+---
+
+## Overview
+
+Scira implements rate limiting to ensure fair usage and system stability. Rate limits vary based on authentication status and subscription tier.
+
+## Rate Limit Tiers
+
+### Unauthenticated Users
+
+**Limits:**
+- **3 searches per 7 days**
+- Basic models only
+- No access to premium features
+
+**Rate Limiting Method:**
+
+Unauthenticated users are rate-limited by IP address using Upstash Redis:
+
+```typescript
+export const unauthenticatedRateLimit = new Ratelimit({
+  redis: Redis.fromEnv(),
+  limiter: Ratelimit.slidingWindow(3, '7 d'),
+  analytics: true,
+  prefix: '@upstash/ratelimit:unauth',
+});
+```
+
+**Identifier Extraction:**
+
+The system uses the following header priority to identify clients:
+
+1. `x-forwarded-for` (first IP if multiple)
+2. `x-real-ip`
+3. Falls back to `"unknown"` if neither present
+
+```typescript
+function getClientIdentifier(req: Request): string {
+  const forwarded = req.headers.get('x-forwarded-for');
+  const realIp = req.headers.get('x-real-ip');
+  const ip = forwarded?.split(',')[0] ?? realIp ?? 'unknown';
+  return `ip:${ip}`;
+}
+```
+
+### Authenticated Users (Free)
+
+**Limits:**
+- **100 searches per day**
+- Access to most models
+- Limited extreme search usage
+- No access to code interpreter
+- No access to memory features
+
+**Rate Limiting Method:**
+
+Authenticated users are tracked by user ID with daily reset:
+
+```typescript
+const messageCountResult = await getUserMessageCount(user);
+
+if (messageCountResult.count >= 100 && !shouldBypassRateLimits(model, user)) {
+  throw new ChatSDKError('rate_limit:chat', 'Daily search limit reached');
+}
+```
+
+**Bypass Conditions:**
+
+Certain models bypass rate limits for free users:
+
+```typescript
+function shouldBypassRateLimits(model: string, user: User): boolean {
+  // Specific low-cost models may bypass limits
+  // Implementation details in providers.ts
+}
+```
+
+### Pro Users
+
+**Limits:**
+- **Unlimited searches**
+- **Unlimited extreme search**
+- All premium models
+- No rate limits
+- Priority processing
+
+**Subscription Validation:**
+
+Pro status is determined by active subscription through either Polar or Dodo Payments:
+
+```typescript
+// Polar subscription check
+const polarActive = subscription.status === 'active' && 
+                    new Date(subscription.currentPeriodEnd) > now;
+
+// Dodo Payments subscription check
+const dodoActive = dodoSubscription.status === 'active' &&
+                   (!dodoSubscription.currentPeriodEnd || 
+                    new Date(dodoSubscription.currentPeriodEnd) > now);
+
+const isProUser = polarActive || dodoActive;
+```
+
+## Rate Limit Headers
+
+Scira does not currently expose rate limit information in response headers, but this may be added in future versions.
+
+**Potential headers (not yet implemented):**
+```http
+X-RateLimit-Limit: 100
+X-RateLimit-Remaining: 87
+X-RateLimit-Reset: 1704153600
+```
+
+## Rate Limit Implementation
+
+### Upstash Rate Limiting
+
+Scira uses [Upstash Rate Limiting](https://upstash.com/docs/redis/sdks/ratelimit-ts/overview) with Redis for distributed rate limiting:
+
+**Features:**
+- Sliding window algorithm
+- Sub-millisecond latency
+- Distributed across edge locations
+- Analytics support
+- Custom prefixes for different limit types
+
+**Configuration:**
+
+```typescript
+const ratelimit = new Ratelimit({
+  redis: Redis.fromEnv(),           // Uses REDIS_URL env var
+  limiter: Ratelimit.slidingWindow(3, '7 d'),
+  analytics: true,                   // Enable analytics
+  prefix: '@upstash/ratelimit:unauth',
+});
+```
+
+**Usage Check:**
+
+```typescript
+const identifier = getClientIdentifier(req);
+const { success, limit, reset } = await unauthenticatedRateLimit.limit(identifier);
+
+if (!success) {
+  const resetDate = new Date(reset);
+  return new ChatSDKError(
+    'rate_limit:api',
+    `You've reached the limit of ${limit} searches per day. 
+     Sign in for more searches or wait until ${resetDate.toLocaleString()}.`
+  ).toResponse();
+}
+```
+
+### Authentication Rate Limiting
+
+The authentication system itself also has rate limiting:
+
+```typescript
+{
+  rateLimit: {
+    max: 100,      // requests
+    window: 60     // seconds
+  }
+}
+```
+
+This prevents authentication abuse (100 auth requests per minute).
+
+## Extreme Search Quotas
+
+Extreme Search has separate usage tracking:
+
+**Free Users:**
+- Limited extreme search calls
+- Tracked separately from regular searches
+- Counter increments per extreme_search tool use
+
+**Pro Users:**
+- Unlimited extreme search
+- Usage still tracked for analytics
+
+**Implementation:**
+
+```typescript
+if (group === 'extreme') {
+  const extremeSearchUsage = await getExtremeSearchUsageCount(user);
+  
+  // Check limits for free users
+  if (!isProUser && extremeSearchUsage.count >= EXTREME_SEARCH_LIMIT) {
+    throw new ChatSDKError(
+      'rate_limit:extreme_search',
+      'Extreme search limit reached'
+    );
+  }
+}
+
+// After successful extreme search
+if (extremeSearchUsed) {
+  await incrementExtremeSearchUsage({ userId: user.id });
+}
+```
+
+## Handling Rate Limit Errors
+
+### Error Response Format
+
+```json
+{
+  "error": {
+    "code": "rate_limit:api",
+    "message": "You've reached the limit of 3 searches per day for unauthenticated users. Sign in for more searches or wait until 1/1/2025, 12:00:00 AM."
+  }
+}
+```
+
+### JavaScript Example
+
+```javascript
+try {
+  const response = await fetch('https://scira.ai/api/search', {
+    method: 'POST',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(searchRequest)
+  });
+  
+  if (response.status === 429) {
+    const error = await response.json();
+    console.error('Rate limit exceeded:', error.error.message);
+    
+    // Show upgrade prompt or retry timer
+    if (error.error.code === 'rate_limit:api') {
+      showUpgradeModal();
+    }
+  }
+} catch (error) {
+  console.error('Request failed:', error);
+}
+```
+
+### Python Example
+
+```python
+import requests
+import time
+
+def search_with_retry(payload, max_retries=3):
+    for attempt in range(max_retries):
+        response = requests.post(
+            'https://scira.ai/api/search',
+            json=payload,
+            headers={'Cookie': 'better-auth.session_token=<token>'}
+        )
+        
+        if response.status_code == 429:
+            error = response.json()
+            print(f"Rate limited: {error['error']['message']}")
+            
+            # Exponential backoff
+            wait_time = 2 ** attempt
+            print(f"Retrying in {wait_time} seconds...")
+            time.sleep(wait_time)
+            continue
+        
+        return response
+    
+    raise Exception("Max retries exceeded")
+```
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Implement exponential backoff">
+    When you hit rate limits, implement exponential backoff:
+    
+    ```javascript
+    async function searchWithBackoff(request, maxRetries = 3) {
+      for (let i = 0; i < maxRetries; i++) {
+        const response = await fetch('/api/search', { 
+          method: 'POST',
+          body: JSON.stringify(request) 
+        });
+        
+        if (response.status !== 429) {
+          return response;
+        }
+        
+        // Wait 2^i seconds before retry
+        await new Promise(r => setTimeout(r, Math.pow(2, i) * 1000));
+      }
+      throw new Error('Rate limit exceeded');
+    }
+    ```
+  </Accordion>
+  
+  <Accordion title="Cache results when possible">
+    Reduce API calls by caching search results:
+    
+    - Cache common queries
+    - Use time-based cache invalidation
+    - Store responses in localStorage or IndexedDB
+    - Share cache across tabs/sessions when appropriate
+  </Accordion>
+  
+  <Accordion title="Monitor your usage">
+    Track your API usage to avoid hitting limits:
+    
+    - Count requests client-side
+    - Display usage to users
+    - Warn before approaching limits
+    - Prompt for upgrade when limit reached
+  </Accordion>
+  
+  <Accordion title="Batch requests when possible">
+    Instead of multiple individual searches:
+    
+    - Combine related queries
+    - Use conversation context effectively
+    - Leverage multi-turn conversations
+  </Accordion>
+  
+  <Accordion title="Handle errors gracefully">
+    Provide good UX when rate limits are hit:
+    
+    - Show clear error messages
+    - Display time until reset
+    - Offer upgrade options
+    - Allow users to queue requests
+  </Accordion>
+  
+  <Accordion title="Authenticate when possible">
+    For the best experience:
+    
+    - Encourage users to sign in
+    - Highlight benefits of authentication (100 vs 3 searches)
+    - Make signup/signin easy
+    - Consider SSO options
+  </Accordion>
+</AccordionGroup>
+
+## Quota Management
+
+### Daily Reset
+
+Authenticated user quotas reset daily at midnight UTC:
+
+```typescript
+// Quota tracking is time-based
+// Reset logic handled by database queries
+const count = await db.query.messageUsage.findMany({
+  where: and(
+    eq(messageUsage.userId, userId),
+    gte(messageUsage.createdAt, startOfDay(new Date()))
+  )
+});
+```
+
+### Usage Tracking
+
+Usage is tracked in the database:
+
+**Message Usage:**
+```typescript
+interface MessageUsage {
+  id: string;
+  userId: string;
+  createdAt: Date;
+  messageId: string;
+}
+```
+
+**Extreme Search Usage:**
+```typescript
+interface ExtremeSearchUsage {
+  id: string;
+  userId: string;
+  createdAt: Date;
+  searchId: string;
+}
+```
+
+### Bypass Mechanisms
+
+Certain conditions bypass rate limits:
+
+1. **Pro Subscription**: All limits bypassed
+2. **Specific Models**: Some low-cost models bypass free tier limits
+3. **Internal Tools**: System-generated requests may bypass limits
+
+## Upgrade Path
+
+When users hit rate limits:
+
+**Unauthenticated → Authenticated:**
+- From 3/7 days to 100/day (33x increase)
+- Sign up with email, GitHub, Google, Twitter, or Microsoft
+
+**Authenticated → Pro:**
+- From 100/day to unlimited
+- Access to premium models
+- Extreme search unlimited
+- Code interpreter
+- Memory features
+- Lookout (scheduled searches)
+- Priority support
+
+## Monitoring and Analytics
+
+Upstash Rate Limit includes analytics:
+
+- Request patterns
+- Limit hit frequency  
+- Geographic distribution
+- User behavior insights
+
+This data helps optimize limits and improve service quality.
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Authentication" icon="key" href="/api/authentication">
+    Learn how to authenticate for higher limits
+  </Card>
+  <Card title="Search API" icon="magnifying-glass" href="/api/search">
+    Start making search requests
+  </Card>
+</CardGroup>

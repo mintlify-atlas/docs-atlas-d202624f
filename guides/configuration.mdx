@@ -1,0 +1,382 @@
+---
+title: "Configuration"
+description: "Configure Scira for your needs"
+---
+
+Scira offers extensive configuration options to customize the application for your specific requirements. This guide covers application settings, database configuration, search providers, and user preferences.
+
+## Application Settings
+
+### Next.js Configuration
+
+The main application configuration is in `next.config.ts`:
+
+```typescript
+const nextConfig: NextConfig = {
+  compiler: {
+    removeConsole: process.env.NODE_ENV === 'production' 
+      ? { exclude: ['error'] } 
+      : false,
+  },
+  reactCompiler: true,
+  experimental: {
+    turbopackFileSystemCacheForDev: true,
+    turbopackFileSystemCacheForBuild: true,
+    optimizePackageImports: [
+      '@phosphor-icons/react',
+      'lucide-react',
+      '@hugeicons/react',
+      'date-fns',
+    ],
+    serverActions: {
+      bodySizeLimit: '20mb',
+    },
+    staleTimes: {
+      dynamic: 10,
+      static: 30,
+    },
+  },
+};
+```
+
+### Key Configuration Options
+
+<ParamField path="compiler.removeConsole" type="object">
+  Removes console statements in production builds (except errors)
+</ParamField>
+
+<ParamField path="reactCompiler" type="boolean">
+  Enables the React compiler for optimized builds
+</ParamField>
+
+<ParamField path="experimental.serverActions.bodySizeLimit" type="string">
+  Maximum size for server action payloads (set to 20MB for file uploads)
+</ParamField>
+
+<ParamField path="experimental.optimizePackageImports" type="array">
+  Packages to optimize for faster imports and smaller bundle sizes
+</ParamField>
+
+### Security Headers
+
+Scira configures security headers automatically:
+
+```typescript
+async headers() {
+  return [
+    {
+      source: '/(.*)',
+      headers: [
+        {
+          key: 'X-Content-Type-Options',
+          value: 'nosniff',
+        },
+        {
+          key: 'X-Frame-Options',
+          value: 'DENY',
+        },
+        {
+          key: 'Referrer-Policy',
+          value: 'strict-origin-when-cross-origin',
+        },
+      ],
+    },
+  ];
+}
+```
+
+### Image Configuration
+
+Next.js image optimization is configured for external sources:
+
+```typescript
+images: {
+  qualities: [75, 100],
+  dangerouslyAllowSVG: true,
+  remotePatterns: [
+    {
+      protocol: 'https',
+      hostname: '**',
+    },
+  ],
+  deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
+  imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
+  formats: ['image/webp'],
+  minimumCacheTTL: 60,
+}
+```
+
+## Database Configuration
+
+Scira uses **Drizzle ORM** with **PostgreSQL**. The configuration is in `drizzle.config.ts`:
+
+```typescript
+import { defineConfig } from 'drizzle-kit';
+
+export default defineConfig({
+  schema: './lib/db/schema.ts',
+  out: './drizzle/migrations',
+  dialect: 'postgresql',
+  dbCredentials: {
+    url: process.env.DATABASE_URL!,
+  },
+});
+```
+
+### Database Schema
+
+<ParamField path="schema" type="string">
+  Path to the database schema file (`./lib/db/schema.ts`)
+</ParamField>
+
+<ParamField path="out" type="string">
+  Directory for generated migrations (`./drizzle/migrations`)
+</ParamField>
+
+<ParamField path="dialect" type="string">
+  Database dialect - PostgreSQL
+</ParamField>
+
+<ParamField path="dbCredentials.url" type="string">
+  Database connection URL from `DATABASE_URL` environment variable
+</ParamField>
+
+### Connection Pooling
+
+For production, configure connection pooling in your database URL:
+
+```bash
+# Example with PgBouncer
+DATABASE_URL="postgresql://user:password@host:6432/database?pgbouncer=true"
+
+# Example with connection pool size
+DATABASE_URL="postgresql://user:password@host:5432/database?pool_size=20"
+```
+
+## Search Provider Preferences
+
+Scira supports multiple search providers. Users can configure their preferred providers through user preferences.
+
+### Available Search Providers
+
+<CardGroup cols={2}>
+  <Card title="Exa" icon="magnifying-glass">
+    AI-powered search with semantic understanding
+  </Card>
+  <Card title="Parallel" icon="arrows-split-up-and-left">
+    High-performance parallel web and Reddit search
+  </Card>
+  <Card title="Tavily" icon="globe">
+    Web search optimized for AI applications
+  </Card>
+  <Card title="Firecrawl" icon="fire">
+    Web scraping with structured data extraction
+  </Card>
+</CardGroup>
+
+### Provider Configuration
+
+Set your search provider API keys in environment variables:
+
+```bash
+EXA_API_KEY=your_exa_api_key
+TAVILY_API_KEY=your_tavily_api_key
+FIRECRAWL_API_KEY=your_firecrawl_api_key
+```
+
+## Custom Instructions
+
+Users can configure custom instructions to personalize AI responses. Custom instructions are stored per user in the database.
+
+### Custom Instructions Schema
+
+From `lib/db/schema.ts`:
+
+```typescript
+export const customInstructions = pgTable('custom_instructions', {
+  id: text('id').primaryKey().$defaultFn(() => generateId()),
+  userId: text('user_id')
+    .notNull()
+    .references(() => user.id, { onDelete: 'cascade' }),
+  content: text('content').notNull(),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+});
+```
+
+### Using Custom Instructions
+
+Custom instructions allow users to:
+- Define preferred response formats
+- Set domain-specific context
+- Configure tone and style preferences
+- Add recurring research requirements
+
+## User Preferences Structure
+
+User preferences are stored in the `user_preferences` table with a flexible JSON structure.
+
+### Preferences Schema
+
+From `lib/db/schema.ts`:
+
+```typescript
+export const userPreferences = pgTable('user_preferences', {
+  id: text('id').primaryKey().$defaultFn(() => generateId()),
+  userId: text('user_id')
+    .notNull()
+    .unique()
+    .references(() => user.id, { onDelete: 'cascade' }),
+  preferences: json('preferences')
+    .$type<{
+      'scira-search-provider'?: 'exa' | 'parallel' | 'tavily' | 'firecrawl';
+      'scira-extreme-search-provider'?: 'exa' | 'parallel';
+      'scira-group-order'?: string[];
+      'scira-model-order-global'?: string[];
+      'scira-blur-personal-info'?: boolean;
+      'scira-custom-instructions-enabled'?: boolean;
+      'scira-location-metadata-enabled'?: boolean;
+    }>()
+    .notNull()
+    .default({}),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+});
+```
+
+### Available Preferences
+
+<ParamField path="scira-search-provider" type="enum">
+  Preferred search provider: `exa`, `parallel`, `tavily`, or `firecrawl`
+</ParamField>
+
+<ParamField path="scira-extreme-search-provider" type="enum">
+  Provider for extreme/deep search: `exa` or `parallel`
+</ParamField>
+
+<ParamField path="scira-group-order" type="array">
+  Custom ordering for search mode groups
+</ParamField>
+
+<ParamField path="scira-model-order-global" type="array">
+  Preferred ordering for AI models
+</ParamField>
+
+<ParamField path="scira-blur-personal-info" type="boolean">
+  Whether to blur personal information in the UI
+</ParamField>
+
+<ParamField path="scira-custom-instructions-enabled" type="boolean">
+  Enable/disable custom instructions for AI responses
+</ParamField>
+
+<ParamField path="scira-location-metadata-enabled" type="boolean">
+  Enable/disable location metadata in searches
+</ParamField>
+
+## Rate Limiting
+
+Scira uses Upstash Redis for rate limiting:
+
+```typescript
+// From lib/auth.ts
+export const auth = betterAuth({
+  rateLimit: {
+    max: 100,
+    window: 60,
+  },
+  // ... other config
+});
+```
+
+<ParamField path="max" type="number">
+  Maximum number of requests (100)
+</ParamField>
+
+<ParamField path="window" type="number">
+  Time window in seconds (60)
+</ParamField>
+
+## CORS and Trusted Origins
+
+Configure allowed origins for authentication:
+
+```typescript
+// From lib/auth.ts
+trustedOrigins: [
+  'http://localhost:3000',
+  'https://scira.ai',
+  'https://www.scira.ai'
+],
+allowedOrigins: [
+  'http://localhost:3000',
+  'https://scira.ai',
+  'https://www.scira.ai'
+]
+```
+
+<Warning>
+  Update `trustedOrigins` and `allowedOrigins` to include your production domain when deploying.
+</Warning>
+
+## Environment-Specific Configuration
+
+Scira uses environment-specific configuration through `env/server.ts` and `env/client.ts`:
+
+```typescript
+import { createJiti } from 'jiti';
+
+const jiti = createJiti(fileURLToPath(import.meta.url));
+
+jiti.import('./env/server.ts');
+jiti.import('./env/client.ts');
+```
+
+This ensures:
+- Server-only environment variables remain secure
+- Client variables are properly exposed with `NEXT_PUBLIC_` prefix
+- Type-safe environment variable access
+- Validation at build time
+
+## Performance Optimization
+
+### Turbopack Configuration
+
+```typescript
+turbopack: {
+  resolveAlias: {
+    '#default-font/*': '@mathjax/mathjax-newcm-font/mjs/*',
+  },
+  resolveExtensions: ['.js', '.jsx', '.ts', '.tsx', '.mjs', '.cjs', '.json'],
+}
+```
+
+### Package Transpilation
+
+```typescript
+transpilePackages: [
+  'geist',
+  '@daytonaio/sdk',
+  'shiki',
+  'resumable-stream',
+  '@t3-oss/env-nextjs',
+  '@t3-oss/env-core',
+  '@mathjax/src',
+  '@mathjax/mathjax-newcm-font',
+]
+```
+
+### External Server Packages
+
+```typescript
+serverExternalPackages: [
+  '@aws-sdk/client-s3',
+  'prettier'
+]
+```
+
+## Next Steps
+
+- [Configure environment variables](/guides/environment-variables)
+- [Set up authentication](/guides/authentication)
+- [Deploy to production](/guides/deployment)

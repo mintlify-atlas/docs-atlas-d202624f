@@ -1,0 +1,108 @@
+---
+title: Integrations overview
+description: Connect Scira with external services for enhanced search and memory capabilities
+---
+
+Scira integrates with external services to extend its capabilities beyond web search, enabling you to search your personal content, build a knowledge base, and access specialized data sources.
+
+## Available integrations
+
+<CardGroup cols={2}>
+  <Card title="Connectors" icon="plug" href="/integrations/connectors">
+    Search across Google Drive, Notion, and OneDrive with semantic search
+  </Card>
+  <Card title="Memory" icon="brain" href="/integrations/memory">
+    Build a personal knowledge base that persists across conversations
+  </Card>
+  <Card title="Web Search APIs" icon="magnifying-glass">
+    Powered by Exa, Tavily, Firecrawl, and Parallel for comprehensive results
+  </Card>
+  <Card title="Specialized Services" icon="sparkles">
+    Access to weather, maps, flights, crypto, stocks, and more
+  </Card>
+</CardGroup>
+
+## Core integrations
+
+### Connectors
+
+Connectors enable semantic search across your personal content stored in cloud services. Scira currently supports:
+
+- **Google Drive** - Documents, spreadsheets, and presentations
+- **Notion** - Pages and databases from your workspace
+- **OneDrive** - Microsoft documents and files (coming soon)
+
+Connectors use [Supermemory](https://supermemory.ai) for indexing and searching your documents with AI-powered semantic understanding.
+
+[Learn more about Connectors →](/integrations/connectors)
+
+### Memory
+
+Memory allows Scira to save and retrieve information across conversations, building a persistent knowledge base unique to you. Use it to:
+
+- Save important information for later retrieval
+- Build context over multiple conversations
+- Store research notes and personal knowledge
+
+Memory is powered by [Supermemory](https://supermemory.ai) and isolates your data using unique user tags.
+
+[Learn more about Memory →](/integrations/memory)
+
+## Third-party search APIs
+
+Scira uses multiple search providers to deliver comprehensive results:
+
+### Exa
+
+Deep learning-powered search engine optimized for AI applications. Provides high-quality content with automatic text extraction.
+
+- **Type**: Neural search
+- **Best for**: Research, accurate content retrieval
+- **Features**: Auto/deep search modes, category filtering
+
+### Tavily
+
+AI-native search API designed for LLM applications with real-time data.
+
+- **Type**: AI-optimized search
+- **Best for**: News, current events, general queries
+- **Features**: Basic/advanced depth, image search, answer summaries
+
+### Firecrawl
+
+Web scraping and search API with support for multiple content types.
+
+- **Type**: Web crawler
+- **Best for**: News articles, images, multi-source content
+- **Features**: Web, news, and image sources
+
+### Parallel AI
+
+Agentic search with intelligent result ranking and processing.
+
+- **Type**: Agentic search
+- **Best for**: Complex queries requiring multi-step reasoning
+- **Features**: One-shot and agentic modes, excerpt extraction
+
+## Authentication & privacy
+
+All integrations use secure authentication:
+
+- **OAuth 2.0** for connector services (Google Drive, Notion, OneDrive)
+- **API keys** stored as environment variables, never exposed to clients
+- **User isolation** through container tags ensuring data privacy
+- **Encrypted storage** for all synced content and memories
+
+## Pro features
+
+<Note>
+Connectors and Memory are **Pro features** requiring a Scira Pro subscription. Web search APIs are available to all users.
+</Note>
+
+## Getting started
+
+1. **Set up connectors** - Connect your Google Drive and Notion accounts
+2. **Enable memory** - Start saving important information across conversations
+3. **Configure API keys** - Ensure all required API keys are set in your environment
+
+Each integration is designed to work seamlessly together, creating a comprehensive AI assistant that understands your context and has access to both public and personal information.

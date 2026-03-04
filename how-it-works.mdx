@@ -1,0 +1,481 @@
+---
+title: How it works
+description: Understand Scira's agentic architecture and intelligent research workflow
+---
+
+Scira is built on an agentic architecture that breaks down complex research questions, selects the right tools, and delivers grounded answers with verifiable citations.
+
+## The Three-Step Process
+
+<Steps>
+  <Step title="Ask anything">
+    You type a question, upload a PDF, or paste a URL. Pick a search mode or let Scira auto-select the best one for your query.
+    
+    Scira accepts:
+    - Natural language questions
+    - File attachments (PDF, CSV, DOCX, Excel)
+    - URLs from any source (tweets, YouTube, articles, papers)
+    - Multi-part research requests
+  </Step>
+
+  <Step title="Scira plans & retrieves">
+    The agent breaks your question into sub-tasks, searches live sources, and cross-checks evidence. This happens automatically through multi-step workflows.
+    
+    Behind the scenes:
+    1. Query decomposition into 3-10 targeted searches
+    2. Parallel execution across multiple search providers
+    3. Content extraction and verification
+    4. Source deduplication and ranking
+  </Step>
+
+  <Step title="Get cited answers">
+    You receive a grounded answer with inline citations. Click any source to verify it yourself. Every fact is traceable to its origin.
+  </Step>
+</Steps>
+
+---
+
+## Agentic Planning
+
+Scira uses AI-powered planning to handle complex, multi-step research workflows. Instead of single-query searches, it orchestrates entire research processes.
+
+### How Planning Works
+
+When you ask a complex question, Scira's planning system:
+
+1. **Analyzes the question** to identify key aspects and requirements
+2. **Generates a research plan** with specific sub-tasks and search queries
+3. **Executes the plan** by calling tools in sequence or parallel
+4. **Iterates based on findings** to fill gaps and verify information
+
+<Accordion title="Example: Deep Research Workflow">
+  For a question like "Compare the market position of Tesla vs Rivian in 2026":
+  
+  ```typescript
+  // Generated research plan
+  {
+    plan: [
+      {
+        title: "Tesla Market Analysis",
+        todos: [
+          "Search Tesla Q4 2025 earnings report",
+          "Find Tesla vehicle delivery numbers 2026",
+          "Research Tesla market share electric vehicles"
+        ]
+      },
+      {
+        title: "Rivian Market Analysis",
+        todos: [
+          "Search Rivian production capacity 2026",
+          "Find Rivian R1T and R1S sales data",
+          "Research Rivian market positioning"
+        ]
+      },
+      {
+        title: "Comparative Analysis",
+        todos: [
+          "Compare Tesla vs Rivian market share",
+          "Analyze competitive advantages both companies"
+        ]
+      }
+    ]
+  }
+  ```
+  
+  Scira executes up to 15 actions automatically, using the right tools for each sub-task.
+</Accordion>
+
+### Extreme Search Mode
+
+For maximum depth, **Extreme** mode uses an autonomous research agent with:
+
+- Multi-step planning with up to 15 actions
+- Code execution for data analysis and visualizations
+- Cross-source verification
+- Artifact storage in Cloudflare R2
+
+```typescript
+// Extreme search can execute Python code
+const research = await extremeSearch(prompt, dataStream, 'exa');
+
+// Available Python libraries:
+// pandas, numpy, scipy, keras, seaborn, matplotlib,
+// transformers, scikit-learn
+```
+
+Extreme searches use either **Exa** or **Parallel** as the content extraction provider, with Firecrawl as fallback.
+
+---
+
+## Tool Selection
+
+Scira has 28 integrated tools. The agent automatically selects the right combination based on your question.
+
+### Search & Retrieval Tools
+
+<AccordionGroup>
+  <Accordion title="Web Search — Multi-provider parallel search">
+    The default tool for most queries. Supports 4 search providers:
+    
+    **Providers:**
+    - **Exa** — Fast semantic search with deep content retrieval
+    - **Parallel** — Agentic search with multi-step reasoning
+    - **Tavily** — News-focused with advanced filtering
+    - **Firecrawl** — Structured extraction and caching
+    
+    **When used:** General questions, fact-finding, current events
+    
+    **Key features:**
+    - 5-10 parallel queries per search
+    - Automatic deduplication by domain and URL
+    - Quality levels: `default` (fast) or `best` (deep)
+    - Topic filtering: `general` or `news`
+    
+    ```typescript
+    // Example: web_search tool call
+    await webSearch({
+      queries: [
+        "latest GPT-5 release date 2026",
+        "GPT-5 performance benchmarks",
+        "OpenAI GPT-5 pricing"
+      ],
+      maxResults: [15, 15, 10],
+      topics: ['news', 'general', 'general'],
+      quality: ['default', 'default', 'default']
+    });
+    ```
+  </Accordion>
+
+  <Accordion title="Academic Search — Research papers and citations">
+    Searches academic papers using Firecrawl with category filtering.
+    
+    **When used:** Research questions, scientific queries, papers
+    
+    **Features:**
+    - PDF parsing and extraction
+    - Citation metadata
+    - Research paper categorization
+    - Up to 20 results per query
+    
+    ```typescript
+    await academicSearch({
+      queries: [
+        "transformer attention mechanisms",
+        "LLM reasoning capabilities"
+      ],
+      maxResults: [20, 20]
+    });
+    ```
+  </Accordion>
+
+  <Accordion title="X Search — Real-time social intelligence">
+    Searches X (Twitter) posts using xAI Grok with advanced filtering.
+    
+    **When used:** Social sentiment, breaking news, public opinion, trending topics
+    
+    **Features:**
+    - Date range filtering (start/end dates)
+    - Handle filtering (include/exclude specific accounts)
+    - Automatic tweet content extraction
+    - Citation tracking
+    
+    ```typescript
+    await xSearch({
+      query: "GPT-5 reactions",
+      startDate: "2026-01-01",
+      endDate: "2026-03-04",
+      xHandles: ["openai", "sama"],
+      maxResults: 15
+    });
+    ```
+  </Accordion>
+
+  <Accordion title="Extreme Search — Deep autonomous research">
+    Autonomous agent that plans and executes comprehensive research.
+    
+    **When used:** Complex questions, multi-faceted analysis, in-depth research
+    
+    **Features:**
+    - AI-powered research planning
+    - Up to 15 autonomous actions
+    - Code execution for analysis
+    - Multi-source verification
+    - Chart generation
+    
+    **Tools available to extreme search:**
+    - `webSearch` — Search with category filtering
+    - `xSearch` — X post search
+    - `codeRunner` — Python execution in Daytona sandbox
+  </Accordion>
+
+  <Accordion title="Other Search Tools">
+    - **Reddit Search** — Community discussions via Parallel
+    - **YouTube Search** — Video transcripts via Supadata
+    - **GitHub Search** — Repository search via Firecrawl
+    - **Spotify Search** — Music search via Spotify Web API
+    - **URL Retrieval** — Extract content from any URL
+  </Accordion>
+</AccordionGroup>
+
+### Financial & Market Tools
+
+<AccordionGroup>
+  <Accordion title="Stock Charts — Market data and analysis">
+    Interactive stock charts with OHLC data, earnings, and news.
+    
+    **Providers:** Valyu (market data), Tavily + Exa (news)
+    
+    **When used:** Stock questions, financial analysis, market research
+  </Accordion>
+
+  <Accordion title="Currency Converter — Forex and crypto rates">
+    Real-time currency conversion via Valyu.
+    
+    **When used:** Exchange rate queries, currency comparisons
+  </Accordion>
+
+  <Accordion title="Crypto Tools — Blockchain and market data">
+    Cryptocurrency data via CoinGecko:
+    - `coin_data` — Token information and metrics
+    - `coin_data_by_contract` — Contract address lookups
+    - `coin_ohlc` — OHLC charts and price history
+    
+    **When used:** Crypto questions, token research, price analysis
+  </Accordion>
+
+  <Accordion title="Prediction Markets — Polymarket and Kalshi">
+    Query prediction market data via Valyu with Cohere reranking.
+    
+    **When used:** Forecasting, probability estimation, market sentiment
+  </Accordion>
+</AccordionGroup>
+
+### Utility Tools
+
+<AccordionGroup>
+  <Accordion title="Code Interpreter — Python execution">
+    Execute Python code in a sandboxed Daytona environment.
+    
+    **Available libraries:** pandas, numpy, scipy, keras, seaborn, matplotlib, transformers, scikit-learn
+    
+    **Features:**
+    - Chart generation (line, bar, scatter)
+    - Data analysis and processing
+    - Mathematical calculations
+    
+    **When used:** Data analysis, calculations, visualizations
+  </Accordion>
+
+  <Accordion title="Other Utility Tools">
+    - **Weather** — Current weather, 5-day and 16-day forecasts (OpenWeatherMap, Open-Meteo)
+    - **Maps & Geocoding** — Location search and nearby places (Google Maps)
+    - **Flight Tracking** — Real-time flight status
+    - **Movie/TV Search** — TMDB search and trending lists
+    - **Text Translation** — Multi-language translation with image text support
+    - **File Query Search** — Semantic search over uploaded files (Cohere embeddings)
+    - **Connectors** — Search Google Drive, Notion, OneDrive (Supermemory)
+    - **Memory** — Save and retrieve personal context (Supermemory)
+    - **Code Context** — Programming topic explanations (Exa Context API)
+    - **Date & Time** — Current time with timezone support
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Grounded Retrieval
+
+Every answer Scira generates is grounded in verifiable sources. This prevents hallucinations and ensures accuracy.
+
+### How Citations Work
+
+1. **Source collection** — All tools return structured source data:
+   ```typescript
+   {
+     title: string,
+     url: string,
+     content: string,
+     publishedDate?: string,
+     author?: string,
+     favicon: string
+   }
+   ```
+
+2. **Deduplication** — Sources are deduplicated by domain and URL to avoid redundancy
+
+3. **Inline citations** — The AI model cites sources inline as it generates the answer
+
+4. **Clickable verification** — Users can click any citation to view the original source
+
+<Note>
+  Scira uses deduplication to ensure you see diverse sources, not multiple results from the same domain.
+</Note>
+
+### Content Extraction Strategies
+
+Different tools use different extraction methods:
+
+**Exa Strategy:**
+- Primary: Exa `getContents` with 3000 char limit
+- Fallback: Firecrawl scraping with markdown parsing
+
+**Parallel Strategy:**
+- Primary: Parallel `extract` with full content
+- Fallback: Firecrawl scraping
+
+**Firecrawl Strategy:**
+- Structured extraction with caching
+- PDF parsing support
+- Proxy rotation for reliability
+
+---
+
+## Search Modes
+
+Search modes determine which tools and models Scira uses. Each mode is optimized for specific question types.
+
+<AccordionGroup>
+  <Accordion title="Web — General web search">
+    Uses the `web_search` tool with Exa/Parallel/Tavily/Firecrawl providers.
+    
+    **Best for:** General questions, fact-finding, current events
+  </Accordion>
+
+  <Accordion title="Chat — Direct model interaction">
+    No search tools. Direct conversation with the AI model.
+    
+    **Best for:** Brainstorming, creative tasks, casual conversation
+  </Accordion>
+
+  <Accordion title="Academic — Research papers">
+    Uses `academic_search` tool with Firecrawl research categorization.
+    
+    **Best for:** Scientific questions, research papers, citations
+  </Accordion>
+
+  <Accordion title="X — Social intelligence">
+    Uses `x_search` tool with xAI Grok.
+    
+    **Best for:** Trending topics, social sentiment, real-time discussions
+  </Accordion>
+
+  <Accordion title="Reddit — Community insights">
+    Uses `reddit_search` tool via Parallel.
+    
+    **Best for:** User experiences, opinions, community discussions
+  </Accordion>
+
+  <Accordion title="GitHub — Developer research">
+    Uses `github_search` via Firecrawl with repo metadata.
+    
+    **Best for:** Code repositories, open source projects, developer tools
+  </Accordion>
+
+  <Accordion title="Stocks — Financial analysis">
+    Uses `stock_chart` tool with Valyu, Tavily, and Exa.
+    
+    **Best for:** Stock questions, earnings, market data
+  </Accordion>
+
+  <Accordion title="Crypto — Blockchain research">
+    Uses crypto tools (`coin_data`, `coin_ohlc`) via CoinGecko.
+    
+    **Best for:** Cryptocurrency questions, token data, price analysis
+  </Accordion>
+
+  <Accordion title="YouTube — Video research">
+    Uses `youtube_search` via Supadata with transcript extraction.
+    
+    **Best for:** Video content, tutorials, channel research
+  </Accordion>
+
+  <Accordion title="Extreme — Deep research">
+    Uses `extreme_search` tool with autonomous agent.
+    
+    **Best for:** Complex questions, multi-step analysis, comprehensive research
+  </Accordion>
+
+  <Accordion title="Other Modes">
+    - **Code** — Programming questions with `code_context` tool
+    - **Spotify** — Music search
+    - **Prediction** — Forecast markets via Polymarket/Kalshi
+    - **Connectors** — Search connected knowledge bases (Pro)
+    - **Memory** — Personal memory companion (Pro)
+    - **Voice** — Real-time voice conversation (Pro)
+    - **XQL** — Advanced X query language (Pro)
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Architecture Overview
+
+```
+┌─────────────────┐
+│  User Question  │
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────┐
+│  Mode Selection │ ◄── Auto-select or user choice
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────┐
+│ Agentic Planner │ ◄── Break down into sub-tasks
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────────────────────────┐
+│       Tool Selection & Execution     │
+│  ┌──────┐ ┌──────┐ ┌──────┐         │
+│  │ Tool │ │ Tool │ │ Tool │  ...    │
+│  │  1   │ │  2   │ │  3   │         │
+│  └──────┘ └──────┘ └──────┘         │
+└────────┬────────────────────────────┘
+         │
+         ▼
+┌─────────────────┐
+│  Source Fusion  │ ◄── Deduplicate & rank
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────┐
+│ Answer Generation│ ◄── With inline citations
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────┐
+│  Cited Answer   │
+└─────────────────┘
+```
+
+## Model Support
+
+Scira supports 100+ AI models across multiple providers:
+
+- **xAI** — Grok 3, Grok 4, Grok Code
+- **OpenAI** — GPT-4.1, GPT-5.x, o3, o4 mini
+- **Anthropic** — Claude 4.5/4.6 (Haiku, Sonnet, Opus)
+- **Google** — Gemini 2.5/3 (Flash, Pro)
+- **Qwen, Mistral, DeepSeek, Cohere, and more**
+
+You can select the model for each conversation based on your needs.
+
+---
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Quickstart" icon="rocket" href="/quickstart">
+    Get started with Scira in under 5 minutes
+  </Card>
+  <Card title="Search Modes" icon="search" href="/features/search-modes">
+    Explore all 17 specialized search modes
+  </Card>
+  <Card title="Tool Reference" icon="wrench" href="/api-reference/tools">
+    Complete reference for all 28 tools
+  </Card>
+  <Card title="Self-Hosting" icon="server" href="/deployment/self-hosting">
+    Deploy Scira on your infrastructure
+  </Card>
+</CardGroup>

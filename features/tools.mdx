@@ -1,0 +1,661 @@
+---
+title: "Tools"
+description: "28 integrated tools for comprehensive research"
+---
+
+Scira provides 28 integrated tools that are automatically invoked based on your query. You don't need to manually select tools—the AI agent determines which tools to use and how to combine them for optimal results.
+
+## Search & Retrieval
+
+### Web Search
+
+**Multi-query parallel web search with deduplication**
+
+The primary search tool supporting multiple providers (Exa, Parallel, Tavily, Firecrawl) with intelligent query generation and result deduplication.
+
+**APIs used**: Exa, Firecrawl, Parallel, Tavily
+
+**Key features:**
+- Parallel multi-query execution (5-10 queries)
+- Domain-based deduplication
+- Image search integration
+- News and general topic filtering
+- Quality levels (default/best)
+- Date/time context awareness
+
+**Example use case:**
+```
+Query: "Latest developments in fusion energy 2025"
+Tool generates: 5-7 targeted queries with date context
+Results: Deduplicated sources from multiple providers with images
+```
+
+**Function signature** (`/lib/tools/web-search.ts:632`):
+```typescript
+function webSearchTool(
+  dataStream?: UIMessageStreamWriter<ChatMessage>,
+  searchProvider: 'exa' | 'parallel' | 'tavily' | 'firecrawl' = 'exa'
+)
+
+// Input schema:
+{
+  queries: string[],           // 3-10 search queries
+  maxResults?: number[],       // Per-query result limits (10-20)
+  topics?: ('general' | 'news')[],
+  quality?: ('default' | 'best')[]
+}
+```
+
+### Extreme Search
+
+**LLM-driven deep research agent with multi-step planning**
+
+Autonomous research agent that plans strategy, executes searches, cross-validates findings, and generates code for data analysis.
+
+**APIs used**: Exa/Parallel, Firecrawl, xAI Grok, Daytona
+
+**Key features:**
+- Autonomous research planning (3-5 phases)
+- Multi-step web and X search
+- Python code execution
+- Chart generation and R2 storage
+- Source collection with full content extraction
+- Configurable provider (Exa or Parallel)
+
+**Example use case:**
+```
+Query: "Analyze the competitive landscape of AI chip manufacturers"
+Tool plans: 4 research phases with 12 search queries
+Executes: Web searches, data analysis, chart generation
+Output: Comprehensive research with sources and visualizations
+```
+
+**Function signature** (`/lib/tools/extreme-search.ts:909`):
+```typescript
+function extremeSearchTool(
+  dataStream: UIMessageStreamWriter<ChatMessage>,
+  contentProvider: 'exa' | 'parallel' = 'exa'
+)
+
+// Input schema:
+{
+  prompt: string  // User's exact research prompt
+}
+```
+
+### Academic Search
+
+**Search academic papers and research**
+
+Specialized search for peer-reviewed papers, academic publications, and scholarly articles using Exa and Firecrawl.
+
+**APIs used**: Exa, Firecrawl
+
+**Key features:**
+- Peer-reviewed source filtering
+- Citation and metadata extraction
+- Author and publication information
+- DOI and arXiv integration
+
+**Example use case:**
+```
+Query: "Recent transformer architecture papers"
+Results: Peer-reviewed papers with citations, authors, DOIs
+```
+
+### Reddit Search
+
+**Search Reddit with configurable time ranges**
+
+**APIs used**: Parallel
+
+**Key features:**
+- Subreddit-specific search
+- Time range filtering
+- Comment thread extraction
+- Engagement metrics (upvotes, comments)
+
+**Example use case:**
+```
+Query: "Best mechanical keyboards under $200"
+Searches: r/MechanicalKeyboards, r/BudgetKeebs
+Results: Top discussions with upvotes and community consensus
+```
+
+### X Search
+
+**Search X posts with date range filtering and handle control**
+
+**APIs used**: xAI Grok native X search
+
+**Key features:**
+- Date range filtering (fromDate/toDate)
+- Handle inclusion/exclusion lists
+- Real-time post retrieval
+- Tweet metadata and engagement
+- Full conversation threads
+
+**Example use case:**
+```
+Query: "Developer reactions to new GPT release"
+Filters: Last 7 days, tech influencer handles
+Results: Tweets with context, engagement stats, threads
+```
+
+### YouTube Search
+
+**Search videos, channels, playlists with transcript extraction**
+
+**APIs used**: Supadata
+
+**Key features:**
+- Video metadata (views, duration, upload date)
+- Transcript extraction and search
+- Channel information
+- Playlist organization
+
+**Example use case:**
+```
+Query: "Python async programming tutorials"
+Results: Videos with transcripts, timestamps, channel info
+```
+
+### GitHub Search
+
+**Search repositories with structured metadata extraction**
+
+**APIs used**: Firecrawl
+
+**Key features:**
+- Repository metadata (stars, forks, issues)
+- README extraction
+- License and dependency info
+- Recent activity tracking
+
+**Example use case:**
+```
+Query: "TypeScript state management libraries"
+Results: Repos with stars, READMEs, dependencies, license info
+```
+
+### Spotify Search
+
+**Search tracks, artists, albums, and playlists**
+
+**APIs used**: Spotify Web API
+
+**Key features:**
+- Track search with metadata
+- Artist discography
+- Album details and tracklists
+- Playlist discovery
+
+### URL Content Retrieval
+
+**Extract content from any URL including social media**
+
+Extract and parse content from URLs including tweets, YouTube videos, TikTok, Instagram, and general web pages.
+
+**APIs used**: Exa, Firecrawl, react-tweet, Supadata
+
+**Key features:**
+- Multi-platform support
+- Social media parsing
+- Markdown conversion
+- Metadata extraction
+
+**Example use case:**
+```
+URL: https://twitter.com/user/status/123456
+Extracted: Tweet text, author, engagement, thread context
+```
+
+## Financial & Market Data
+
+### Stock Charts
+
+**Interactive stock charts with OHLC data, earnings, and news**
+
+**APIs used**: Valyu, Tavily, Exa
+
+**Key features:**
+- Natural language company resolution ("Apple" → AAPL)
+- OHLC candlestick chart data
+- Time period parsing ("last 6 months", "since IPO")
+- SEC filing retrieval (10-K, 10-Q, 8-K)
+- Balance sheets and income statements (2020+)
+- Company statistics (P/E, market cap, debt ratios)
+- Multi-source financial news
+- Earnings data integration
+
+**Example use case:**
+```
+Query: "Tesla stock last year with 10-K filing"
+Generates: OHLC chart, SEC 10-K sections, news, statistics
+```
+
+**Function signature** (`/lib/tools/stock-chart.ts:51`):
+```typescript
+stockChartTool({
+  title: string,
+  news_queries: string[],
+  icon: 'stock' | 'date' | 'calculation' | 'default',
+  companies: string[],        // Natural language names
+  currency_symbols?: string[], // USD, EUR, GBP, etc.
+  time_period: string,        // Natural language
+  filing_types?: ('10-K' | '10-Q' | '8-K')[],
+  sections?: string[],        // Filing sections to extract
+  include_statistics?: boolean,
+  include_balance_sheet?: boolean,
+  include_income_statement?: boolean
+})
+```
+
+### Currency Converter
+
+**Forex and crypto conversion with real-time rates**
+
+**APIs used**: Valyu
+
+**Key features:**
+- Real-time exchange rates
+- Forex and cryptocurrency support
+- Historical rate data
+- Multi-currency conversion
+
+**Example use case:**
+```
+Query: "Convert 1000 USD to EUR and BTC"
+Results: Current rates with historical context
+```
+
+### Crypto Tools
+
+**Cryptocurrency data, contract lookups, and OHLC charts**
+
+**APIs used**: CoinGecko
+
+Three specialized tools for crypto research:
+
+**1. Coin Data Tool** (`/lib/tools/crypto-tools.ts:5`)
+```typescript
+coinDataTool({
+  coinId: string,              // bitcoin, ethereum, solana
+  localization?: boolean,      // Include localized languages
+  tickers?: boolean,           // Ticker data
+  marketData?: boolean,        // Market prices and volume
+  communityData?: boolean,     // Social stats
+  developerData?: boolean      // GitHub activity
+})
+```
+
+**2. Coin Data by Contract** (`/lib/tools/crypto-tools.ts:75`)
+```typescript
+coinDataByContractTool({
+  platformId: string,          // ethereum, binance-smart-chain
+  contractAddress: string,     // Token contract address
+  // ... same optional params as coinDataTool
+})
+```
+
+**3. Coin OHLC Tool**
+```typescript
+coinOhlcTool({
+  coinId: string,
+  currency: string,            // usd, eur, btc
+  days: number                 // 1, 7, 14, 30, 90, 180, 365, max
+})
+```
+
+**Example use case:**
+```
+Query: "Bitcoin price analysis last 30 days"
+Executes: coinOhlcTool with coinDataTool for context
+Results: OHLC chart, market data, volume, supply info
+```
+
+### Prediction Markets
+
+**Query Polymarket and Kalshi data with Cohere reranking**
+
+**APIs used**: Valyu, Cohere
+
+**Key features:**
+- Polymarket integration
+- Kalshi regulated markets
+- Probability tracking over time
+- Market volume and liquidity
+- Cohere reranking for relevance
+
+**Example use case:**
+```
+Query: "2026 midterm election predictions"
+Results: Active markets with probabilities, volume, history
+```
+
+## Location & Travel
+
+### Weather
+
+**Current weather, forecasts, air quality**
+
+**APIs used**: OpenWeatherMap, Open-Meteo
+
+**Key features:**
+- Current conditions
+- 5-day hourly forecast
+- 16-day extended forecast
+- Air quality index
+- UV index and visibility
+- Multiple location formats (city, coordinates, zip)
+
+**Example use case:**
+```
+Query: "Weather in San Francisco next week"
+Results: Current + 5-day detailed forecast with air quality
+```
+
+### Maps & Geocoding
+
+**Forward/reverse geocoding and nearby place discovery**
+
+**APIs used**: Google Maps API
+
+Two tools for location services:
+
+**1. Find Place on Map**
+- Forward geocoding (address → coordinates)
+- Location search and validation
+- Place details and metadata
+
+**2. Nearby Places Search**
+- Radius-based place discovery
+- Type filtering (restaurants, hotels, etc.)
+- Ranking by distance or prominence
+- Place details (ratings, reviews, hours)
+
+**Example use case:**
+```
+Query: "Find coffee shops near Union Square, SF"
+Tool: nearbyPlacesSearchTool
+Results: Shops with ratings, distance, hours, photos
+```
+
+### Flight Tracking
+
+**Real-time flight status with departure/arrival details**
+
+**Key features:**
+- Live flight tracking
+- Departure and arrival times
+- Gate information
+- Delay and cancellation status
+- Aircraft details
+
+**Example use case:**
+```
+Query: "Status of AA100 today"
+Results: Live position, ETA, gate, delay info
+```
+
+## Media & Entertainment
+
+### Movie/TV Search
+
+**Search movies and TV shows with detailed metadata**
+
+**APIs used**: TMDB (The Movie Database)
+
+**Key features:**
+- Movie and TV show search
+- Cast and crew information
+- Ratings (TMDB, IMDb)
+- Release dates and runtime
+- Genre and keyword tags
+- Plot summaries
+- Similar content recommendations
+
+**Example use case:**
+```
+Query: "Best sci-fi movies of 2024"
+Results: Movies with ratings, cast, plot, streaming info
+```
+
+### Trending Movies
+
+**Today's trending movies from TMDB**
+
+**APIs used**: TMDB
+
+**Key features:**
+- Daily trending data
+- Popularity metrics
+- Vote averages
+- Release information
+
+### Trending TV Shows
+
+**Today's trending TV shows from TMDB**
+
+**APIs used**: TMDB
+
+**Key features:**
+- Daily trending series
+- Episode information
+- Season data
+- Network and streaming details
+
+## Productivity & Utilities
+
+### Code Interpreter
+
+**Write and execute Python code in sandboxed environment**
+
+**APIs used**: Daytona
+
+**Key features:**
+- Sandboxed Python execution
+- Chart generation (matplotlib, seaborn)
+- Data analysis (pandas, numpy, scipy)
+- Machine learning (scikit-learn, keras, transformers)
+- Automatic chart artifact storage
+- Result output capture
+
+**Available libraries**:
+- pandas, numpy, scipy
+- matplotlib, seaborn
+- scikit-learn, keras, transformers
+
+**Example use case:**
+```
+Query: "Calculate compound interest for $10k at 7% over 30 years"
+Generates: Python code with calculation and chart
+Executes: In Daytona sandbox
+Returns: Result + line chart artifact
+```
+
+**Function signature** (`/lib/tools/code-interpreter.ts:7`):
+```typescript
+codeInterpreterTool({
+  title: string,
+  code: string,               // Python code to execute
+  icon: 'stock' | 'date' | 'calculation' | 'default'
+})
+```
+
+### Code Context
+
+**Get contextual information about programming topics**
+
+**APIs used**: Exa Context API
+
+**Key features:**
+- Developer-focused content
+- API documentation
+- Best practices
+- Code examples
+- Framework guides
+
+**Example use case:**
+```
+Query: "Next.js 15 Server Actions best practices"
+Results: Official docs, community guides, code examples
+```
+
+### Text Translation
+
+**Translate text and text within images between languages**
+
+**Key features:**
+- Multi-language support
+- Image text recognition (OCR)
+- Context-aware translation
+- Language detection
+
+**Example use case:**
+```
+Input: Image with Japanese text
+Output: Detected language, translated English text
+```
+
+### File Query Search
+
+**Semantic search over uploaded files**
+
+**APIs used**: Cohere (embeddings and reranking)
+
+**Supported formats**:
+- PDF documents
+- CSV data files
+- DOCX documents
+- Excel spreadsheets
+
+**Key features:**
+- Semantic embedding search
+- Cohere reranking
+- Multi-file querying
+- Content extraction
+
+**Example use case:**
+```
+Uploaded: Q4-2024-Report.pdf
+Query: "What were the key challenges mentioned?"
+Results: Relevant sections with context
+```
+
+### Connectors Search
+
+<Info>**Pro feature** - Requires Scira Pro subscription</Info>
+
+**Search connected Google Drive, Notion, and OneDrive**
+
+**APIs used**: Supermemory
+
+**Key features:**
+- Google Drive integration
+- Notion workspace search
+- OneDrive file access
+- Unified semantic search
+- Cross-platform content discovery
+
+**Example use case:**
+```
+Query: "Find notes about Q4 planning"
+Searches: Across Drive, Notion, OneDrive
+Results: Relevant documents with snippets and links
+```
+
+### Memory Tools
+
+<Info>**Pro feature** - Requires Scira Pro subscription</Info>
+
+**Save and search personal memories**
+
+**APIs used**: Supermemory
+
+Two tools for memory management:
+
+**1. Add Memory Tool**
+- Save information for later retrieval
+- Tag and categorize memories
+- Associate with conversations
+
+**2. Search Memory Tool**
+- Semantic memory search
+- Context retrieval
+- Cross-conversation recall
+
+**Example use case:**
+```
+Add: "Remember I prefer Python over JavaScript for backend"
+Later query: "What languages do I prefer for backend?"
+Recalled: Stored preference with original context
+```
+
+### Date & Time
+
+**Current date/time in multiple formats with timezone support**
+
+**Key features:**
+- Multiple format support (ISO, locale-specific)
+- Timezone conversion
+- Calendar calculations
+- Relative date parsing
+
+**Example use case:**
+```
+Query: "What time is it in Tokyo?"
+Results: Current Tokyo time with timezone info
+```
+
+### Greeting
+
+**Personalized time-of-day-aware greetings**
+
+**Key features:**
+- Time-based greeting selection
+- User name personalization
+- Context awareness
+
+## Tool Selection Strategy
+
+Scira's AI agent automatically selects tools based on:
+
+1. **Query analysis**: Understanding intent and information needs
+2. **Context awareness**: Previous conversation and user preferences
+3. **Tool capabilities**: Matching requirements to tool features
+4. **Optimization**: Minimizing redundant calls and maximizing coverage
+5. **Parallel execution**: Running independent tools concurrently
+
+**Example multi-tool workflow:**
+```
+Query: "Analyze Tesla stock with latest news and Elon's recent tweets"
+
+Selected tools:
+1. stockChartTool (OHLC data + SEC filings)
+2. webSearchTool (financial news queries)
+3. xSearchTool (Elon Musk's handle, last 7 days)
+
+Execution: Parallel tool calls for efficiency
+Synthesis: Combined analysis with citations
+```
+
+## Provider Configuration
+
+Many tools support multiple API providers. You can configure preferred providers in settings:
+
+- **Web search**: Exa (default), Parallel, Tavily, Firecrawl
+- **Extreme search content**: Exa (default), Parallel
+- **Additional providers**: Configure via environment variables
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Search Modes" icon="magnifying-glass" href="/features/search-modes">
+    Learn how tools are used in different search modes
+  </Card>
+  
+  <Card title="AI Models" icon="sparkles" href="/features/ai-models">
+    Explore models that power tool selection and execution
+  </Card>
+</CardGroup>

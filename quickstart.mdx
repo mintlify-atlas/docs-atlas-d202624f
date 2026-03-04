@@ -1,80 +1,171 @@
 ---
-title: "Quickstart"
-description: "Start building awesome documentation in minutes"
+title: Quickstart
+description: Get started with Scira in under 5 minutes
 ---
 
-## Get started in three steps
+Welcome to Scira, your agentic research platform that plans, retrieves, and cites — so you can think faster.
 
-Get your documentation site running locally and make your first customization.
-
-### Step 1: Set up your local environment
-
-<AccordionGroup>
-  <Accordion icon="copy" title="Clone your docs locally">
-    During the onboarding process, you created a GitHub repository with your docs content if you didn't already have one. You can find a link to this repository in your [dashboard](https://dashboard.mintlify.com).
+<Steps>
+  <Step title="Create your account">
+    Head to [scira.ai](https://scira.ai) and sign up with your preferred method:
     
-    To clone the repository locally so that you can make and preview changes to your docs, follow the [Cloning a repository](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) guide in the GitHub docs.
-  </Accordion>
-  <Accordion icon="rectangle-terminal" title="Start the preview server">
-    1. Install the Mintlify CLI: `npm i -g mint`
-    2. Navigate to your docs directory and run: `mint dev`
-    3. Open `http://localhost:3000` to see your docs live!
+    - GitHub
+    - Google
+    - Twitter/X
     
-    <Tip>Your preview updates automatically as you edit files.</Tip>
-  </Accordion>
-</AccordionGroup>
+    No credit card required to get started. Free users get 10 daily searches and 5 extreme searches.
+  </Step>
 
-### Step 2: Deploy your changes
-
-<AccordionGroup>
-  <Accordion icon="github" title="Install our GitHub app">
-    Install the Mintlify GitHub app from your [dashboard](https://dashboard.mintlify.com/settings/organization/github-app).
+  <Step title="Choose a search mode">
+    Scira offers 17 specialized search modes to match your research needs:
     
-    Our GitHub app automatically deploys your changes to your docs site, so you don't need to manage deployments yourself.
-</Accordion>
-<Accordion icon="palette" title="Update your site name and colors">
-    For a first change, let's update the name and colors of your docs site.
+    - **Web** — AI-powered analysis across the entire web
+    - **Academic** — Research papers and scholarly sources
+    - **X** — Real-time posts, trends, and conversations
+    - **Reddit** — Community discussions and insights
+    - **GitHub** — Repositories and developer discussions
+    - **Stocks** — Market data and financial analysis
+    - **Crypto** — Cryptocurrency research via CoinGecko
+    - **YouTube** — Video summaries and transcripts
+    - **Extreme** — Deep multi-step research with analysis
+    
+    Don't worry about choosing — Scira can auto-select the best mode based on your question.
+    
+    <Tip>
+      Start with **Web** mode for general questions, or **Extreme** mode when you need comprehensive research with multiple sources.
+    </Tip>
+  </Step>
 
-    1. Open `docs.json` in your editor.
-    2. Change the `"name"` field to your project name.
-    3. Update the `"colors"` to match your brand.
-    4. Save and see your changes instantly at `http://localhost:3000`.
+  <Step title="Ask your first question">
+    Type your question naturally and hit enter. Scira will:
+    
+    1. Break down your question into search queries
+    2. Search across multiple sources in parallel
+    3. Cross-check evidence and verify information
+    4. Return a grounded answer with inline citations
+    
+    **Example questions to try:**
+    ```
+    What are the latest developments in AI reasoning models?
+    ```
+    
+    ```
+    Compare the performance of GPT-4 vs Claude Sonnet
+    ```
+    
+    ```
+    What's the current sentiment on Tesla stock?
+    ```
+    
+    Every fact in your answer will have a clickable citation — click any source to verify the evidence yourself.
+    
+    <Note>
+      Scira uses multiple search providers (Exa, Firecrawl, Parallel, Tavily) to ensure comprehensive coverage and accuracy.
+    </Note>
+  </Step>
 
-    <Tip>Try changing the primary color to see an immediate difference!</Tip>
-  </Accordion>
-</AccordionGroup>
+  <Step title="Add context with files or URLs">
+    Make your research more targeted by providing context:
+    
+    **Upload a PDF:**
+    - Click the attachment icon
+    - Select your PDF file
+    - Ask questions about the content
+    
+    **Paste a URL:**
+    - Include any URL in your question
+    - Scira extracts content automatically
+    - Supports tweets, YouTube videos, TikTok, Instagram, and more
+    
+    **Supported file formats:**
+    - PDF documents
+    - CSV spreadsheets
+    - DOCX files
+    - Excel files
+    
+    <Tip>
+      For technical PDFs, try: "Summarize the key findings in this research paper" with your PDF attached.
+    </Tip>
+  </Step>
 
-### Step 3: Go live
+  <Step title="Explore advanced features">
+    Once you're comfortable with basic searches, unlock more power:
+    
+    ### Lookouts (Scheduled Research)
+    Set up recurring research agents that monitor topics and email you updates:
+    ```typescript
+    // Lookouts run on your schedule
+    schedule: "daily" | "weekly" | "monthly"
+    ```
+    
+    ### Connectors (Pro)
+    Search your connected knowledge bases:
+    - Google Drive
+    - Notion workspaces
+    - OneDrive files
+    
+    ### Memory (Pro)
+    Build a personal memory companion that remembers context across conversations:
+    ```typescript
+    // Save important findings
+    add_memory({ content: "Key insight" })
+    
+    // Search your memories
+    search_memories({ query: "previous research" })
+    ```
+    
+    ### Voice Mode (Pro)
+    Conversational AI with real-time voice interaction for hands-free research.
+  </Step>
 
-<Accordion icon="rocket" title="Publish your docs">
-  1. Commit and push your changes.
-  2. Your docs will update and be live in moments!
-</Accordion>
+  <Step title="Master the workflow">
+    **Best practices for powerful research:**
+    
+    1. **Be specific** — Include dates, metrics, and technical terms
+       - ❌ "AI news"
+       - ✅ "Latest AI reasoning models released in 2026"
+    
+    2. **Use the right mode** — Match the mode to your question type
+       - Financial questions → **Stocks** or **Crypto** mode
+       - Academic research → **Academic** mode
+       - Social sentiment → **X** or **Reddit** mode
+    
+    3. **Verify sources** — Click citations to audit evidence
+       - Every answer includes inline citations
+       - Sources show favicon, title, and URL
+       - Cross-check multiple sources for accuracy
+    
+    4. **Iterate and refine** — Ask follow-up questions
+       - Build on previous answers
+       - Request deeper analysis
+       - Ask for specific data points
+    
+    <Note>
+      Scira's agentic planning means it can break complex questions into multi-step workflows automatically. For deep research, use **Extreme** mode.
+    </Note>
+  </Step>
+</Steps>
 
-## Next steps
-
-Now that you have your docs running, explore these key features:
+## Next Steps
 
 <CardGroup cols={2}>
-
-<Card title="Write Content" icon="pen-to-square" href="/essentials/markdown">
-  Learn MDX syntax and start writing your documentation.
-</Card>
-
-<Card title="Customize style" icon="palette" href="/essentials/settings">
-  Make your docs match your brand perfectly.
-</Card>
-
-<Card title="Add code examples" icon="square-code" href="/essentials/code">
-  Include syntax-highlighted code blocks.
-</Card>
-
-<Card title="API documentation" icon="code" href="/api-reference/introduction">
-  Auto-generate API docs from OpenAPI specs.
-</Card>
-
+  <Card title="How it works" icon="gear" href="/how-it-works">
+    Understand Scira's agentic architecture and tool selection
+  </Card>
+  <Card title="Search Modes" icon="search" href="/features/search-modes">
+    Explore all 17 specialized search modes
+  </Card>
+  <Card title="API Reference" icon="code" href="/api-reference">
+    Integrate Scira into your applications
+  </Card>
+  <Card title="Self-Hosting" icon="server" href="/deployment/self-hosting">
+    Deploy Scira on your own infrastructure
+  </Card>
 </CardGroup>
 
-<Note>
-  **Need help?** See our [full documentation](https://mintlify.com/docs) or join our [community](https://mintlify.com/community).
-</Note>
+## Get Help
+
+Stuck? We're here to help:
+- Join our community on Discord
+- Check out [GitHub discussions](https://github.com/zaidmukaddam/scira)
+- Email support at hello@scira.ai

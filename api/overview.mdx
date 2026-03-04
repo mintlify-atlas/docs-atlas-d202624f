@@ -1,0 +1,127 @@
+---
+title: "API Overview"
+description: "Integrate Scira's search capabilities into your applications"
+---
+
+## Introduction
+
+Scira provides a powerful REST API that enables developers to integrate advanced AI-powered search and research capabilities into their applications. The API supports real-time streaming responses, multiple search modes, and scheduled research agents.
+
+## Base URL
+
+All API requests should be made to:
+
+```
+https://scira.ai/api
+```
+
+For local development:
+
+```
+http://localhost:3000/api
+```
+
+## Available Endpoints
+
+Scira's API consists of the following main endpoints:
+
+### Search Endpoints
+
+- **POST /search** - Create a new search and stream AI-generated results
+- **GET /search/[id]/stream** - Resume or reconnect to an existing search stream
+
+### Lookout Endpoints
+
+- **POST /lookout** - Create and manage scheduled research agents (Pro only)
+
+## Authentication
+
+Scira uses session-based authentication powered by better-auth. API requests must include valid session cookies obtained through the authentication flow.
+
+Some features require different authentication levels:
+- **Unauthenticated**: Limited to 3 searches per 7 days
+- **Authenticated**: 100 searches per day for free users
+- **Pro subscription**: Unlimited searches and access to premium features
+
+See the [Authentication](/api/authentication) page for detailed information.
+
+## Response Format
+
+Scira's API uses two response formats depending on the endpoint:
+
+### JSON Responses
+
+Standard API responses return JSON data:
+
+```json
+{
+  "success": true,
+  "data": {
+    // Response data
+  }
+}
+```
+
+### Server-Sent Events (SSE)
+
+Search endpoints stream responses using Server-Sent Events (SSE) for real-time results. The stream includes multiple event types:
+
+- **data** - Incremental response chunks
+- **tool-call** - Tool execution notifications
+- **finish** - Stream completion with metadata
+- **error** - Error information
+
+## Error Handling
+
+The API uses structured error responses with specific error codes:
+
+| Error Code | HTTP Status | Description |
+|------------|-------------|-------------|
+| `unauthorized:auth` | 401 | Authentication required |
+| `unauthorized:model` | 401 | Model requires authentication |
+| `forbidden:chat` | 403 | Access denied to chat |
+| `upgrade_required:model` | 402 | Pro subscription required |
+| `rate_limit:api` | 429 | Rate limit exceeded |
+| `rate_limit:chat` | 429 | Daily search limit reached |
+| `not_found:chat` | 404 | Chat not found |
+| `not_found:stream` | 404 | Stream not found |
+| `bad_request:api` | 400 | Invalid request |
+| `bad_request:database` | 400 | Database operation failed |
+
+### Error Response Format
+
+```json
+{
+  "error": {
+    "code": "rate_limit:api",
+    "message": "You've reached the limit of 3 searches per day for unauthenticated users."
+  }
+}
+```
+
+## Rate Limits
+
+Scira implements rate limiting to ensure fair usage:
+
+- **Unauthenticated users**: 3 requests per 7 days
+- **Free authenticated users**: 100 searches per day
+- **Pro users**: No rate limits
+
+Rate limit information is available in response headers. See [Rate Limits](/api/rate-limits) for more details.
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Authentication" icon="key" href="/api/authentication">
+    Learn how to authenticate your API requests
+  </Card>
+  <Card title="Search API" icon="magnifying-glass" href="/api/search">
+    Create and stream search results
+  </Card>
+  <Card title="Lookout API" icon="calendar" href="/api/lookout">
+    Set up scheduled research agents
+  </Card>
+  <Card title="Rate Limits" icon="gauge" href="/api/rate-limits">
+    Understand rate limiting and quotas
+  </Card>
+</CardGroup>

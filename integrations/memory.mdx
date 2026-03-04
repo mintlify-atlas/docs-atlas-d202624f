@@ -1,0 +1,379 @@
+---
+title: Memory
+description: Build a personal knowledge base that persists across conversations
+---
+
+<Note>
+Memory is a **Pro feature** requiring a Scira Pro subscription.
+</Note>
+
+Memory allows Scira to save and retrieve information across conversations, creating a persistent knowledge base unique to you. Unlike standard chat history, memory stores facts, preferences, and context that Scira can recall in future sessions.
+
+## What is memory?
+
+Memory is Scira's long-term knowledge retention system. It enables:
+
+- **Persistent context** - Information saved across sessions
+- **Knowledge building** - Accumulate insights over time
+- **Personalization** - Scira remembers your preferences and history
+- **Retrieval** - Search through saved memories semantically
+
+### Memory vs. chat history
+
+| Feature | Chat History | Memory |
+|---------|--------------|--------|
+| Duration | Session-based | Persistent |
+| Storage | Conversation log | Knowledge base |
+| Search | Chronological | Semantic |
+| Scope | Single conversation | All conversations |
+| Purpose | Context continuity | Long-term retention |
+
+## How memory works
+
+Memory uses [Supermemory](https://supermemory.ai) to store and retrieve information:
+
+1. **Save** - You or Scira saves important information
+2. **Embedding** - Content is converted to semantic vectors
+3. **Indexing** - Stored with your unique user tags
+4. **Retrieval** - Searched when relevant to your queries
+
+```typescript
+// Memory tools powered by Supermemory
+import { supermemoryTools } from '@supermemory/tools/ai-sdk';
+
+export function createMemoryTools(userId: string) {
+  return supermemoryTools(serverEnv.SUPERMEMORY_API_KEY, {
+    containerTags: [userId],
+  });
+}
+```
+
+## Using memory
+
+### Saving memories
+
+Explicitly ask Scira to remember something:
+
+<CodeGroup>
+```text Personal preferences
+"Remember that I prefer TypeScript over JavaScript"
+"Save that my favorite color is blue"
+"Keep in mind that I work in Pacific timezone"
+```
+
+```text Project context
+"Remember that Project Apollo launches in Q3 2024"
+"Save the API endpoint: https://api.example.com/v2"
+"Note that Sarah is the product manager for this feature"
+```
+
+```text Research and learning
+"Remember that React hooks were introduced in version 16.8"
+"Save this explanation of how JWT tokens work"
+"Keep this definition of semantic search for later"
+```
+</CodeGroup>
+
+### Retrieving memories
+
+Ask Scira to recall information:
+
+<CodeGroup>
+```text Direct recall
+"What do you remember about my color preferences?"
+"Recall what I told you about Project Apollo"
+"What did I save about JWT tokens?"
+```
+
+```text Contextual retrieval
+"When does the project launch?" // Retrieves Project Apollo launch date
+"What timezone am I in?" // Retrieves timezone preference
+"How do I authenticate?" // Retrieves API endpoint info
+```
+</CodeGroup>
+
+Scira automatically searches your memories when they're relevant to your conversation.
+
+## Memory tools
+
+The memory system provides two core tools:
+
+### Add memory tool
+
+Saves new information to your knowledge base:
+
+```typescript
+export type AddMemoryTool = Tool<
+  {
+    memory: string; // The information to save
+  },
+  | {
+      success: boolean;
+      memory: any; // Saved memory object
+      error?: undefined;
+    }
+  | {
+      success: boolean;
+      error: string;
+      memory?: undefined;
+    }
+>;
+```
+
+**Usage:**
+```typescript
+const result = await addMemory({
+  memory: "User prefers dark mode in all applications"
+});
+```
+
+### Search memory tool
+
+Retrieves relevant memories based on a query:
+
+```typescript
+export type SearchMemoryTool = Tool<
+  {
+    informationToGet: string; // What to search for
+  },
+  | {
+      success: boolean;
+      results: any[];
+      count: number;
+      error?: undefined;
+    }
+  | {
+      success: boolean;
+      error: string;
+      results?: undefined;
+      count?: undefined;
+    }
+>;
+```
+
+**Usage:**
+```typescript
+const result = await searchMemory({
+  informationToGet: "user color preferences"
+});
+// Returns: { success: true, results: [...], count: 3 }
+```
+
+## Use cases
+
+### Personal assistant
+
+Build a knowledge base of your preferences and routines:
+
+- Daily schedule and habits
+- Contact information
+- Favorite tools and resources
+- Personal goals and tracking
+
+### Research companion
+
+Accumulate knowledge from research sessions:
+
+- Key findings and insights
+- Reference materials
+- Paper summaries
+- Research questions and hypotheses
+
+### Project context
+
+Maintain project-specific information:
+
+- Team members and roles
+- API endpoints and credentials
+- Architecture decisions
+- Deployment procedures
+
+### Learning and development
+
+Store concepts and techniques you're learning:
+
+- Programming patterns
+- Framework documentation snippets
+- Code examples
+- Best practices
+
+## Implementation details
+
+### User isolation
+
+Memories are isolated per user using container tags:
+
+```typescript
+const containerTags = [userId];
+```
+
+This ensures your memories are private and never accessible to other users.
+
+### Semantic search
+
+Memory search uses AI embeddings to understand meaning:
+
+- **Not keyword matching** - Finds conceptually similar content
+- **Context-aware** - Understands relationships between ideas
+- **Ranking** - Results sorted by semantic similarity
+
+**Example:**
+Query: "What programming language do I like?"
+Memory: "User prefers TypeScript over JavaScript"
+Result: ✅ Match (high similarity)
+
+### Memory structure
+
+Each memory is stored with:
+
+```typescript
+interface Memory {
+  content: string;           // The saved information
+  userId: string;            // Owner identifier
+  createdAt: Date;           // When it was saved
+  metadata?: {               // Optional context
+    source?: string;         // Where it came from
+    tags?: string[];         // User-defined tags
+    [key: string]: any;
+  };
+}
+```
+
+## Privacy and security
+
+<Warning>
+Memories are stored in Supermemory's infrastructure and encrypted at rest. Scira does not have access to the raw content of your memories outside of retrieval operations.
+</Warning>
+
+### Data protection
+
+- **Encrypted storage** - All memories encrypted at rest
+- **User isolation** - Container tags prevent cross-user access
+- **API security** - Supermemory API key required for all operations
+- **No sharing** - Memories are never shared with other users or services
+
+### What gets stored
+
+- **Text content** - The information you save
+- **Timestamps** - When memories were created
+- **User tags** - Your unique identifier
+- **Embeddings** - Semantic vectors for search (not human-readable)
+
+### What doesn't get stored
+
+- **Sensitive credentials** - Don't save passwords or API keys
+- **PII without consent** - Be mindful of personal information
+- **Temporary data** - Use chat history for session-specific context
+
+## Supermemory integration
+
+Memory is powered by [Supermemory](https://supermemory.ai), an AI memory infrastructure:
+
+```typescript
+import { supermemoryTools } from '@supermemory/tools/ai-sdk';
+```
+
+### Configuration
+
+Set up your Supermemory API key:
+
+```bash
+# .env.local
+SUPERMEMORY_API_KEY=your_api_key_here
+```
+
+### Tool initialization
+
+Memory tools are created per user:
+
+```typescript
+const memoryTools = createMemoryTools(userId);
+
+// Returns:
+// - addMemory tool
+// - searchMemory tool
+```
+
+### AI SDK integration
+
+Memory tools integrate seamlessly with Vercel AI SDK:
+
+```typescript
+import { generateText } from 'ai';
+
+const { text } = await generateText({
+  model: yourModel,
+  tools: {
+    ...createMemoryTools(userId),
+  },
+  prompt: "Remember that I prefer dark mode",
+});
+```
+
+## Best practices
+
+### Effective memory saving
+
+1. **Be specific** - "Prefers React over Vue" vs. "Likes React"
+2. **Include context** - "For Project Apollo: deadline is March 15"
+3. **Use natural language** - Save in complete sentences
+4. **Avoid duplication** - Update existing memories instead of creating duplicates
+
+### Efficient retrieval
+
+1. **Ask semantically** - "What's my coding style?" retrieves language preferences
+2. **Use context clues** - Reference project names, topics, or timeframes
+3. **Be patient** - Initial retrieval may take 1-2 seconds
+4. **Verify results** - Check that retrieved info is still current
+
+### Memory organization
+
+1. **Categorize mentally** - Think of memories in topics or domains
+2. **Update regularly** - Keep information current
+3. **Archive old info** - Clear outdated memories
+4. **Use descriptive saves** - Make memories searchable
+
+## Troubleshooting
+
+### Memories not saving
+
+- **Check API key** - Ensure `SUPERMEMORY_API_KEY` is set
+- **Verify user ID** - Must be logged in with valid session
+- **Network issues** - Supermemory API must be reachable
+
+### Poor retrieval results
+
+- **Too vague** - Make queries more specific
+- **No relevant memories** - Save information first
+- **Semantic mismatch** - Try rephrasing the query
+
+### Duplicate memories
+
+- **Manual deduplication** - Search and remove duplicates
+- **Better save habits** - Check before saving new info
+- **Update instead** - Modify existing memories when appropriate
+
+## Limitations
+
+- **Text only** - Cannot store images, files, or binary data
+- **Search latency** - Semantic search takes 1-2 seconds
+- **No deletion API** - Currently cannot delete individual memories
+- **Context window** - Very large memory sets may impact performance
+
+## API reference
+
+Memory tools in `lib/tools/supermemory.ts`:
+
+- `createMemoryTools(userId)` - Initialize memory tools for user
+- `SearchMemoryTool` - Tool interface for searching memories
+- `AddMemoryTool` - Tool interface for adding memories
+
+## Future enhancements
+
+Planned features for memory:
+
+- **Memory management UI** - View, edit, and delete memories
+- **Automatic categorization** - AI-organized memory tags
+- **Memory expiry** - Time-based memory lifecycle
+- **Export/import** - Backup and restore memories
+- **Shared memories** - Team knowledge bases (Pro Teams)

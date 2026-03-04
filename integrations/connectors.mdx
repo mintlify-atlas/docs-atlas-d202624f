@@ -1,0 +1,297 @@
+---
+title: Connectors
+description: Search your Google Drive, Notion, and OneDrive with semantic AI-powered search
+---
+
+<Note>
+Connectors are a **Pro feature** requiring a Scira Pro subscription.
+</Note>
+
+Connectors enable Scira to perform semantic search across your personal documents stored in cloud services. Instead of keyword matching, connectors use AI to understand the meaning of your queries and find relevant content even when exact words don't match.
+
+## Supported platforms
+
+<CardGroup cols={3}>
+  <Card title="Google Drive" icon="google">
+    Documents, spreadsheets, presentations
+    
+    **Limit**: 3,000 documents
+  </Card>
+  <Card title="Notion" icon="book">
+    Pages and databases
+    
+    **Limit**: 2,000 documents
+  </Card>
+  <Card title="OneDrive" icon="microsoft">
+    Microsoft documents and files
+    
+    **Status**: Coming soon
+  </Card>
+</CardGroup>
+
+## How connectors work
+
+When you connect a service to Scira:
+
+1. **OAuth authentication** - You authorize Scira to access your content
+2. **Document indexing** - Your documents are synced to Supermemory
+3. **Semantic processing** - Content is chunked and embedded for AI search
+4. **Isolated storage** - Your data is tagged with your unique user ID
+
+### Search process
+
+When Scira searches your connectors:
+
+```typescript
+// Scira's connector search tool
+const result = await client.search.documents({
+  q: query,
+  containerTags: [userId, config.syncTag],
+  limit: 15,
+  rerank: true,
+  includeSummary: true,
+});
+```
+
+The search:
+- Uses semantic similarity to find relevant documents
+- Re-ranks results for accuracy
+- Returns document chunks with relevance scores
+- Generates direct links to source documents
+
+## Connecting a service
+
+### Google Drive
+
+1. Navigate to your Scira Pro settings
+2. Click **Connect Google Drive**
+3. Authorize Scira to access your Drive files
+4. Wait for initial sync (may take a few minutes)
+
+```typescript
+// Connection configuration
+const config = {
+  name: 'Google Drive',
+  documentLimit: 3000,
+  syncTag: 'gdrive-sync',
+};
+```
+
+### Notion
+
+1. Navigate to your Scira Pro settings
+2. Click **Connect Notion**
+3. Select the pages/databases to share with Scira
+4. Authorize the integration
+5. Wait for initial sync
+
+```typescript
+// Connection configuration
+const config = {
+  name: 'Notion',
+  documentLimit: 2000,
+  syncTag: 'notion-workspace',
+};
+```
+
+### OneDrive (coming soon)
+
+OneDrive integration is currently in development and will be available soon.
+
+## Using connectors
+
+Once connected, simply ask Scira questions about your documents:
+
+<CodeGroup>
+```text General queries
+"Find my meeting notes from last week"
+"What did I write about project planning?"
+"Show me documents related to marketing strategy"
+```
+
+```text Specific providers
+"Search my Google Drive for budget spreadsheets"
+"Find Notion pages about product roadmap"
+"Look in all my connected services for contract templates"
+```
+</CodeGroup>
+
+Scira automatically determines when to search your connectors based on the context of your conversation.
+
+## Implementation details
+
+### Document metadata
+
+Each synced document includes:
+
+```typescript
+interface EnhancedDocument {
+  documentId: string;
+  title: string | null;
+  content: string | null;
+  summary: string | null;
+  chunks: Array<{
+    content: string;
+    score: number;
+    isRelevant: boolean;
+  }>;
+  score: number;
+  metadata: Record<string, unknown> | null;
+  provider: 'google-drive' | 'notion' | 'onedrive' | null;
+  url: string; // Direct link to source
+  type: string | null; // Document type/mime type
+  createdAt: string;
+  updatedAt: string;
+}
+```
+
+### URL generation
+
+Scira generates direct links to your documents:
+
+- **Google Drive**: `https://drive.google.com/file/d/{documentId}/view`
+- **Notion**: `https://notion.so/{title-slug}-{documentId}`
+- **OneDrive**: `https://1drv.ms/b/s!{documentId}`
+
+### Content filtering
+
+Results are filtered to ensure quality:
+
+```typescript
+// Documents must have valid content
+const hasValidContent = (doc) => {
+  // Must have non-empty chunks, summary, or content
+  // Excludes "Empty Chunk" placeholders
+  return doc.chunks?.some(chunk => 
+    chunk.content?.trim() && 
+    chunk.content !== 'Empty Chunk'
+  );
+};
+```
+
+## Privacy and security
+
+<Warning>
+Your documents are synced to Supermemory's secure infrastructure for indexing and search. Scira does not store your document content directly.
+</Warning>
+
+### Data isolation
+
+Each user's documents are isolated using unique tags:
+
+```typescript
+const containerTags = [
+  userId,              // Your unique user ID
+  config.syncTag,      // Service identifier
+];
+```
+
+This ensures your documents are never accessible to other users.
+
+### What gets synced
+
+- **Text content** - Extracted and chunked for search
+- **Metadata** - Title, type, creation/update dates
+- **Source links** - References back to original documents
+
+### What doesn't get synced
+
+- **File attachments** - Only text content is indexed
+- **Images** - Visual content is not processed
+- **Private/restricted** - Only documents you explicitly authorize
+
+## Managing connections
+
+### View connection status
+
+```typescript
+const status = await getSyncStatus(provider, userId);
+// Returns:
+// {
+//   isConnected: true,
+//   documentCount: 1247,
+//   lastSync: "2024-01-15T10:30:00Z",
+//   email: "user@example.com",
+//   status: "active"
+// }
+```
+
+### Manual sync
+
+Trigger a manual sync to refresh your documents:
+
+```typescript
+await manualSync(provider, userId);
+```
+
+### Disconnect a service
+
+Remove a connected service and delete synced documents:
+
+```typescript
+await deleteConnection(connectionId);
+```
+
+## Supermemory integration
+
+Connectors are powered by [Supermemory](https://supermemory.ai), an AI memory infrastructure:
+
+- **Semantic search** - Understanding meaning, not just keywords
+- **Automatic chunking** - Intelligent document segmentation
+- **Re-ranking** - Results sorted by relevance
+- **Incremental sync** - Only new/changed documents are processed
+
+### API configuration
+
+```typescript
+import Supermemory from 'supermemory';
+
+const client = new Supermemory({
+  apiKey: process.env.SUPERMEMORY_API_KEY,
+});
+```
+
+Your Supermemory API key must be set in your environment variables.
+
+## Troubleshooting
+
+### No results found
+
+- **Check sync status** - Ensure documents have been indexed
+- **Verify permissions** - Confirm Scira has access to the documents
+- **Try broader queries** - Use semantic queries rather than exact phrases
+
+### Sync issues
+
+- **Document limits** - You may have exceeded the provider's limit
+- **API errors** - Check your Supermemory API key is valid
+- **OAuth expiry** - Reconnect if authorization has expired
+
+### Performance
+
+- **Initial sync** - First sync may take several minutes for large accounts
+- **Search speed** - Typically returns results in 1-3 seconds
+- **Re-ranking** - Improves accuracy but adds slight latency
+
+## Best practices
+
+1. **Organize your content** - Well-structured documents search better
+2. **Use descriptive titles** - Helps with semantic matching
+3. **Regular syncs** - Keep your index up to date
+4. **Specific queries** - More context leads to better results
+5. **Monitor limits** - Stay within document count restrictions
+
+## API reference
+
+Connector functions in `lib/connectors.tsx`:
+
+- `createConnection(provider, userId)` - Initialize OAuth flow
+- `getConnection(provider, userId)` - Check connection status
+- `listUserConnections(userId)` - Get all user connections
+- `deleteConnection(connectionId)` - Remove connection
+- `manualSync(provider, userId)` - Trigger document sync
+- `getSyncStatus(provider, userId)` - Get sync statistics
+
+Search tool in `lib/tools/connectors-search.ts`:
+
+- `createConnectorsSearchTool(userId, selectedConnectors)` - Create search tool instance

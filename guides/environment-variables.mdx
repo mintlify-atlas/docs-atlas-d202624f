@@ -1,0 +1,411 @@
+---
+title: "Environment variables"
+description: "Complete reference of environment variables"
+---
+
+Scira requires various API keys and configuration settings through environment variables. This guide provides a complete reference of all available environment variables.
+
+<Info>
+  Copy `.env.example` to `.env.local` (for development) or `.env` (for production) and configure the required variables.
+</Info>
+
+## AI API Keys
+
+API keys for AI model providers. At minimum, you need OpenAI and Anthropic.
+
+<ParamField path="XAI_API_KEY" type="string">
+  xAI API key for Grok models (Grok 3, Grok 4, Grok Code)
+  
+  **Get your key**: [console.x.ai](https://console.x.ai)
+</ParamField>
+
+<ParamField path="OPENAI_API_KEY" type="string" required>
+  OpenAI API key for GPT models
+  
+  **Get your key**: [platform.openai.com/api-keys](https://platform.openai.com/api-keys)
+</ParamField>
+
+<ParamField path="ANTHROPIC_API_KEY" type="string" required>
+  Anthropic API key for Claude models (Haiku, Sonnet, Opus)
+  
+  **Get your key**: [console.anthropic.com](https://console.anthropic.com)
+</ParamField>
+
+<ParamField path="GROQ_API_KEY" type="string">
+  Groq API key for fast inference
+  
+  **Get your key**: [console.groq.com](https://console.groq.com)
+</ParamField>
+
+<ParamField path="GOOGLE_GENERATIVE_AI_API_KEY" type="string">
+  Google API key for Gemini models (Gemini 2.5 Flash, Gemini 2.5 Pro, Gemini 3)
+  
+  **Get your key**: [makersuite.google.com/app/apikey](https://makersuite.google.com/app/apikey)
+</ParamField>
+
+## Development & Sandbox
+
+<ParamField path="DAYTONA_API_KEY" type="string">
+  Daytona API key for code execution sandbox
+  
+  Enables the code interpreter tool for executing Python code in a sandboxed environment.
+  
+  **Get your key**: [daytona.io](https://daytona.io)
+</ParamField>
+
+## Database & Storage
+
+<ParamField path="DATABASE_URL" type="string" required>
+  PostgreSQL database connection URL
+  
+  Format: `postgresql://user:password@host:port/database`
+  
+  **Example**: `postgresql://postgres:password@localhost:5432/scira`
+  
+  For production, use a managed PostgreSQL service like:
+  - [Vercel Postgres](https://vercel.com/storage/postgres)
+  - [Supabase](https://supabase.com)
+  - [Neon](https://neon.tech)
+  - [Railway](https://railway.app)
+</ParamField>
+
+<ParamField path="REDIS_URL" type="string" required>
+  Redis connection URL for serverless caching and rate limiting
+  
+  Format: `redis://default:password@host:port`
+  
+  **Recommended**: [Upstash Redis](https://upstash.com/redis) for serverless Redis
+</ParamField>
+
+<ParamField path="BLOB_READ_WRITE_TOKEN" type="string">
+  Vercel Blob storage token for file uploads
+  
+  Required for storing uploaded files (PDFs, images, etc.) and extreme search artifacts.
+  
+  **Get your token**: [vercel.com/storage/blob](https://vercel.com/storage/blob)
+</ParamField>
+
+## Authentication
+
+<ParamField path="BETTER_AUTH_SECRET" type="string" required>
+  Secret key for Better Auth session encryption
+  
+  Generate a secure random string:
+  ```bash
+  openssl rand -base64 32
+  ```
+  
+  <Warning>
+    Keep this secret secure. Never commit it to version control or expose it publicly.
+  </Warning>
+</ParamField>
+
+### GitHub OAuth
+
+<ParamField path="GITHUB_CLIENT_ID" type="string">
+  GitHub OAuth application client ID
+  
+  **Create an OAuth app**: [github.com/settings/developers](https://github.com/settings/developers)
+  
+  Set callback URL to: `https://yourdomain.com/api/auth/callback/github`
+</ParamField>
+
+<ParamField path="GITHUB_CLIENT_SECRET" type="string">
+  GitHub OAuth application client secret
+</ParamField>
+
+### Google OAuth
+
+<ParamField path="GOOGLE_CLIENT_ID" type="string">
+  Google OAuth 2.0 client ID
+  
+  **Create OAuth credentials**: [console.cloud.google.com/apis/credentials](https://console.cloud.google.com/apis/credentials)
+  
+  Set authorized redirect URI to: `https://yourdomain.com/api/auth/callback/google`
+</ParamField>
+
+<ParamField path="GOOGLE_CLIENT_SECRET" type="string">
+  Google OAuth 2.0 client secret
+</ParamField>
+
+### Twitter/X OAuth
+
+<ParamField path="TWITTER_CLIENT_ID" type="string">
+  Twitter/X OAuth 2.0 client ID
+  
+  **Create an app**: [developer.twitter.com/en/portal/projects-and-apps](https://developer.twitter.com/en/portal/projects-and-apps)
+  
+  Set callback URL to: `https://yourdomain.com/api/auth/callback/twitter`
+</ParamField>
+
+<ParamField path="TWITTER_CLIENT_SECRET" type="string">
+  Twitter/X OAuth 2.0 client secret
+</ParamField>
+
+## Search & Web APIs
+
+<ParamField path="TAVILY_API_KEY" type="string">
+  Tavily API key for web search and financial news
+  
+  **Get your key**: [tavily.com](https://tavily.com)
+</ParamField>
+
+<ParamField path="EXA_API_KEY" type="string" required>
+  Exa API key for AI-powered web search, academic search, and content retrieval
+  
+  **Required for**: Web search feature
+  
+  **Get your key**: [exa.ai](https://exa.ai)
+</ParamField>
+
+<ParamField path="FIRECRAWL_API_KEY" type="string">
+  Firecrawl API key for web scraping with structured extraction
+  
+  **Get your key**: [firecrawl.dev](https://firecrawl.dev)
+</ParamField>
+
+<ParamField path="SUPADATA_API_KEY" type="string">
+  Supadata API key for YouTube search, transcripts, and social media content
+  
+  **Get your key**: [supadata.ai](https://supadata.ai)
+</ParamField>
+
+## Media & Entertainment
+
+<ParamField path="TMDB_API_KEY" type="string">
+  The Movie Database (TMDB) API key for movie and TV show data
+  
+  **Get your key**: [themoviedb.org/settings/api](https://www.themoviedb.org/settings/api)
+</ParamField>
+
+<ParamField path="YT_ENDPOINT" type="string">
+  YouTube endpoint for video search and transcript extraction
+</ParamField>
+
+<ParamField path="ELEVENLABS_API_KEY" type="string">
+  ElevenLabs API key for voice synthesis (Pro feature)
+  
+  **Get your key**: [elevenlabs.io](https://elevenlabs.io)
+</ParamField>
+
+## Maps & Location
+
+<ParamField path="GOOGLE_MAPS_API_KEY" type="string">
+  Google Maps API key for geocoding and place discovery
+  
+  **Enable APIs**: Maps JavaScript API, Geocoding API, Places API
+  
+  **Get your key**: [console.cloud.google.com/google/maps-apis](https://console.cloud.google.com/google/maps-apis)
+</ParamField>
+
+<ParamField path="MAPBOX_ACCESS_TOKEN" type="string">
+  Mapbox access token for map rendering
+  
+  **Get your token**: [mapbox.com/account/access-tokens](https://account.mapbox.com/access-tokens)
+</ParamField>
+
+<ParamField path="TRIPADVISOR_API_KEY" type="string">
+  TripAdvisor API key for location and travel data
+  
+  **Get your key**: [tripadvisor.com/developers](https://www.tripadvisor.com/developers)
+</ParamField>
+
+## Weather & Aviation
+
+<ParamField path="OPENWEATHER_API_KEY" type="string">
+  OpenWeatherMap API key for weather data and forecasts
+  
+  **Get your key**: [openweathermap.org/api](https://openweathermap.org/api)
+</ParamField>
+
+<ParamField path="AVIATION_STACK_API_KEY" type="string">
+  Aviation Stack API key for flight tracking
+  
+  **Get your key**: [aviationstack.com](https://aviationstack.com)
+</ParamField>
+
+## Memory & MCP
+
+<ParamField path="SUPERMEMORY_API_KEY" type="string">
+  Supermemory API key for memory management and connector search (Pro feature)
+  
+  Enables searching connected Google Drive, Notion, and OneDrive.
+  
+  **Get your key**: [supermemory.ai](https://supermemory.ai)
+</ParamField>
+
+<ParamField path="SMITHERY_API_KEY" type="string">
+  Smithery API key for Model Context Protocol (MCP) integration
+  
+  **Get your key**: [smithery.ai](https://smithery.ai)
+</ParamField>
+
+## Cron & Security
+
+<ParamField path="CRON_SECRET" type="string">
+  Secret key for authenticating cron job requests
+  
+  Used by Lookouts (scheduled research agents) to authenticate scheduled executions.
+  
+  Generate a secure random string:
+  ```bash
+  openssl rand -base64 32
+  ```
+</ParamField>
+
+## Subscription & Payments
+
+<ParamField path="POLAR_ACCESS_TOKEN" type="string">
+  Polar API access token for subscription management
+  
+  **Get your token**: [polar.sh](https://polar.sh)
+</ParamField>
+
+<ParamField path="POLAR_WEBHOOK_SECRET" type="string">
+  Polar webhook secret for verifying webhook signatures
+</ParamField>
+
+<ParamField path="NEXT_PUBLIC_STARTER_TIER" type="string">
+  Product ID for Starter subscription tier (Polar)
+</ParamField>
+
+<ParamField path="NEXT_PUBLIC_STARTER_SLUG" type="string">
+  Product slug for Starter subscription tier (Polar)
+</ParamField>
+
+<ParamField path="DODO_PAYMENTS_API_KEY" type="string">
+  Dodo Payments API key for premium subscription management
+  
+  **Get your key**: [dodopayments.com](https://dodopayments.com)
+</ParamField>
+
+<ParamField path="DODO_PAYMENTS_WEBHOOK_SECRET" type="string">
+  Dodo Payments webhook secret for verifying webhook signatures
+</ParamField>
+
+<ParamField path="NEXT_PUBLIC_PREMIUM_TIER" type="string">
+  Product ID for Premium subscription tier (Dodo Payments)
+</ParamField>
+
+<ParamField path="NEXT_PUBLIC_PREMIUM_SLUG" type="string">
+  Product slug for Premium subscription tier (Dodo Payments)
+</ParamField>
+
+## Client-side Environment Variables
+
+These variables are exposed to the browser with the `NEXT_PUBLIC_` prefix.
+
+<Warning>
+  Only use `NEXT_PUBLIC_` prefix for non-sensitive data that can be safely exposed to clients.
+</Warning>
+
+<ParamField path="NEXT_PUBLIC_MAPBOX_TOKEN" type="string">
+  Public Mapbox token for client-side map rendering
+  
+  **Get your token**: [mapbox.com/account/access-tokens](https://account.mapbox.com/access-tokens)
+</ParamField>
+
+<ParamField path="NEXT_PUBLIC_GOOGLE_MAPS_API_KEY" type="string">
+  Public Google Maps API key for client-side maps
+</ParamField>
+
+<ParamField path="NEXT_PUBLIC_POSTHOG_KEY" type="string">
+  PostHog project API key for analytics
+  
+  **Get your key**: [posthog.com](https://posthog.com)
+</ParamField>
+
+<ParamField path="NEXT_PUBLIC_POSTHOG_HOST" type="string">
+  PostHog API host URL
+  
+  **Default**: `https://app.posthog.com`
+</ParamField>
+
+<ParamField path="NEXT_PUBLIC_SCIRA_PUBLIC_API_KEY" type="string">
+  Public API key for Scira client features
+</ParamField>
+
+<ParamField path="SCIRA_API_KEY" type="string">
+  Server-side Scira API key for internal API authentication
+</ParamField>
+
+## Environment File Examples
+
+### Development (.env.local)
+
+```bash
+# Minimal configuration for local development
+OPENAI_API_KEY=sk-...
+ANTHROPIC_API_KEY=sk-ant-...
+EXA_API_KEY=...
+
+DATABASE_URL=postgresql://postgres:password@localhost:5432/scira
+REDIS_URL=redis://localhost:6379
+
+BETTER_AUTH_SECRET=your-generated-secret-here
+
+# Optional: Add more API keys as needed
+```
+
+### Production (.env)
+
+```bash
+# Production environment configuration
+NODE_ENV=production
+
+# Required AI providers
+OPENAI_API_KEY=sk-...
+ANTHROPIC_API_KEY=sk-ant-...
+EXA_API_KEY=...
+
+# Database (use managed PostgreSQL)
+DATABASE_URL=postgresql://user:pass@host:5432/db?sslmode=require
+REDIS_URL=rediss://default:pass@host:6379
+
+# Authentication
+BETTER_AUTH_SECRET=your-secure-production-secret
+
+# OAuth providers (configure all you want to support)
+GITHUB_CLIENT_ID=...
+GITHUB_CLIENT_SECRET=...
+GOOGLE_CLIENT_ID=...
+GOOGLE_CLIENT_SECRET=...
+
+# Storage
+BLOB_READ_WRITE_TOKEN=...
+
+# Add all other API keys for features you want to enable
+```
+
+## Security Best Practices
+
+<Warning>
+  **Never commit environment files to version control!**
+  
+  Ensure `.env`, `.env.local`, and `.env.production` are in your `.gitignore`.
+</Warning>
+
+<CardGroup cols={2}>
+  <Card title="Use strong secrets" icon="key">
+    Generate secrets with `openssl rand -base64 32`
+  </Card>
+  <Card title="Rotate regularly" icon="rotate">
+    Rotate API keys and secrets periodically
+  </Card>
+  <Card title="Limit permissions" icon="shield-halved">
+    Use API keys with minimal required permissions
+  </Card>
+  <Card title="Monitor usage" icon="chart-line">
+    Track API usage to detect unauthorized access
+  </Card>
+</CardGroup>
+
+## Validation
+
+Scira validates environment variables at build time using `@t3-oss/env-nextjs`. Missing required variables will cause build failures with helpful error messages.
+
+## Next Steps
+
+- [Configure authentication providers](/guides/authentication)
+- [Set up database](/guides/self-hosting#database-setup)
+- [Deploy to production](/guides/deployment)

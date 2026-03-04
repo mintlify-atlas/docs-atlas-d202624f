@@ -1,0 +1,321 @@
+---
+title: "Deployment"
+description: "Deploy Scira to production"
+---
+
+This guide covers deploying Scira to production environments, including Vercel, Docker-based deployments, and custom infrastructure.
+
+## Vercel Deployment (Recommended)
+
+The easiest way to deploy Scira is using Vercel's one-click deployment:
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fzaidmukaddam%2Fscira&env=XAI_API_KEY,OPENAI_API_KEY,ANTHROPIC_API_KEY,GROQ_API_KEY,GOOGLE_GENERATIVE_AI_API_KEY,DAYTONA_API_KEY,DATABASE_URL,BETTER_AUTH_SECRET,GITHUB_CLIENT_ID,GITHUB_CLIENT_SECRET,GOOGLE_CLIENT_ID,GOOGLE_CLIENT_SECRET,TWITTER_CLIENT_ID,TWITTER_CLIENT_SECRET,REDIS_URL,ELEVENLABS_API_KEY,TAVILY_API_KEY,EXA_API_KEY,SUPADATA_API_KEY,TMDB_API_KEY,YT_ENDPOINT,FIRECRAWL_API_KEY,OPENWEATHER_API_KEY,GOOGLE_MAPS_API_KEY,MAPBOX_ACCESS_TOKEN,AVIATION_STACK_API_KEY,CRON_SECRET,BLOB_READ_WRITE_TOKEN,MEM0_API_KEY,MEM0_ORG_ID,MEM0_PROJECT_ID,SMITHERY_API_KEY,NEXT_PUBLIC_MAPBOX_TOKEN,NEXT_PUBLIC_POSTHOG_KEY,NEXT_PUBLIC_POSTHOG_HOST,NEXT_PUBLIC_SCIRA_PUBLIC_API_KEY,SCIRA_API_KEY&envDescription=API%20keys%20and%20configuration%20required%20for%20Scira%20to%20function)
+
+<Steps>
+  <Step title="Click the Deploy button">
+    Click the "Deploy with Vercel" button above to start the deployment process.
+  </Step>
+
+  <Step title="Configure environment variables">
+    Vercel will prompt you to configure the required environment variables. See the [Environment Variables](/guides/environment-variables) guide for details on each variable.
+
+    At minimum, you'll need:
+    - `OPENAI_API_KEY`
+    - `ANTHROPIC_API_KEY`
+    - `DATABASE_URL`
+    - `BETTER_AUTH_SECRET`
+    - `REDIS_URL`
+  </Step>
+
+  <Step title="Deploy">
+    Click "Deploy" and Vercel will:
+    - Clone the repository
+    - Install dependencies
+    - Build the application
+    - Deploy to production
+  </Step>
+
+  <Step title="Run database migrations">
+    After deployment, run database migrations:
+
+    ```bash
+    pnpm drizzle-kit push
+    ```
+  </Step>
+</Steps>
+
+### Vercel Configuration
+
+Scira is optimized for Vercel with the following Next.js configuration:
+
+- **Output**: Standalone mode for optimal performance
+- **Server Actions**: 20MB body size limit for file uploads
+- **Image Optimization**: Configured for various external image sources
+- **Edge Config**: Support for Vercel Edge Config
+- **Analytics**: Built-in Vercel Analytics and Speed Insights integration
+
+## Docker Deployment
+
+### Production Docker Setup
+
+For Docker-based production deployments:
+
+<Steps>
+  <Step title="Prepare environment file">
+    Create a `.env` file with all required environment variables:
+
+    ```bash
+    cp .env.example .env
+    ```
+
+    Edit `.env` and configure all production values.
+  </Step>
+
+  <Step title="Build the production image">
+    Build the Docker image:
+
+    ```bash
+    docker build -t scira.app:production .
+    ```
+
+    The multi-stage Dockerfile optimizes for:
+    - **Small image size** - Uses Alpine Linux and output tracing
+    - **Security** - Runs as non-root user
+    - **Performance** - Standalone Next.js build
+  </Step>
+
+  <Step title="Run the container">
+    Start the container:
+
+    ```bash
+    docker run -d \
+      --name scira \
+      --env-file .env \
+      -p 3000:3000 \
+      --restart unless-stopped \
+      scira.app:production
+    ```
+  </Step>
+</Steps>
+
+### Docker Compose Production
+
+For orchestrating multiple containers:
+
+```yaml
+version: '3.8'
+
+services:
+  scira.app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - '3000:3000'
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - HOSTNAME=0.0.0.0
+    env_file:
+      - .env
+    restart: unless-stopped
+    depends_on:
+      - postgres
+      - redis
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: scira
+      POSTGRES_USER: scira
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+```
+
+### Container Health Checks
+
+Add health checks to your Docker setup:
+
+```dockerfile
+HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
+  CMD node -e "require('http').get('http://localhost:3000/api/health', (r) => r.statusCode === 200 ? process.exit(0) : process.exit(1))"
+```
+
+## Environment Setup
+
+### Required Environment Variables
+
+For production, you **must** configure:
+
+<ParamField path="NODE_ENV" type="string" required>
+  Set to `production` for production deployments
+</ParamField>
+
+<ParamField path="DATABASE_URL" type="string" required>
+  PostgreSQL connection string
+</ParamField>
+
+<ParamField path="REDIS_URL" type="string" required>
+  Redis connection URL for caching and rate limiting
+</ParamField>
+
+<ParamField path="BETTER_AUTH_SECRET" type="string" required>
+  Secret key for authentication. Generate with:
+  ```bash
+  openssl rand -base64 32
+  ```
+</ParamField>
+
+### Production Security Checklist
+
+<Warning>
+  Before deploying to production, ensure you:
+
+  - ✅ Use strong, randomly generated secrets
+  - ✅ Enable HTTPS/SSL encryption
+  - ✅ Configure proper CORS origins
+  - ✅ Set up database connection pooling
+  - ✅ Enable Redis for rate limiting
+  - ✅ Configure OAuth redirect URLs correctly
+  - ✅ Never expose API keys in client-side code
+  - ✅ Set up monitoring and error tracking
+  - ✅ Configure database backups
+  - ✅ Use environment-specific configurations
+</Warning>
+
+## Database Migrations
+
+Run database migrations after deployment:
+
+```bash
+# Push schema changes to database
+pnpm drizzle-kit push
+
+# Or generate and apply migrations
+pnpm drizzle-kit generate
+pnpm drizzle-kit migrate
+```
+
+### Migration Best Practices
+
+1. **Test migrations locally first** - Always test migrations in a development environment
+2. **Backup before migrating** - Create a database backup before running migrations
+3. **Use transactions** - Drizzle ORM automatically wraps migrations in transactions
+4. **Monitor migration progress** - Watch logs during migration execution
+5. **Rollback plan** - Have a rollback strategy ready if migrations fail
+
+## Health Checks and Monitoring
+
+### Health Check Endpoint
+
+Implement a health check endpoint for monitoring:
+
+```typescript
+// app/api/health/route.ts
+export async function GET() {
+  return Response.json({ status: 'ok' });
+}
+```
+
+### Monitoring Recommendations
+
+- **Application Performance** - Use Vercel Analytics or similar
+- **Error Tracking** - Configure error logging (e.g., Sentry)
+- **Database Monitoring** - Monitor query performance and connection pool
+- **Redis Monitoring** - Track cache hit rates and memory usage
+- **API Rate Limiting** - Monitor rate limit hits via Upstash
+
+### Performance Optimization
+
+Next.js configuration in `next.config.ts` includes:
+
+```typescript
+{
+  compiler: {
+    removeConsole: process.env.NODE_ENV === 'production' ? { exclude: ['error'] } : false,
+  },
+  experimental: {
+    optimizePackageImports: [
+      '@phosphor-icons/react',
+      'lucide-react',
+      '@hugeicons/react',
+      'date-fns',
+    ],
+    staleTimes: {
+      dynamic: 10,
+      static: 30,
+    },
+  },
+}
+```
+
+## Scaling Considerations
+
+### Database Scaling
+
+- Use connection pooling (PgBouncer)
+- Configure read replicas for read-heavy workloads
+- Optimize indexes for frequently queried fields
+- Monitor slow queries and optimize them
+
+### Redis Scaling
+
+- Use Redis Cluster for high availability
+- Configure appropriate eviction policies
+- Monitor memory usage and scale vertically if needed
+
+### Application Scaling
+
+- Enable horizontal scaling with multiple instances
+- Use load balancing for traffic distribution
+- Configure CDN for static assets
+- Optimize image delivery with Next.js Image component
+
+## Troubleshooting
+
+### Common Deployment Issues
+
+<AccordionGroup>
+  <Accordion title="Build fails with module not found error">
+    Ensure all dependencies are properly installed:
+    ```bash
+    rm -rf node_modules
+    pnpm install
+    ```
+  </Accordion>
+
+  <Accordion title="Database connection fails">
+    - Verify `DATABASE_URL` is correct
+    - Check database server is accessible
+    - Ensure database user has proper permissions
+    - Verify SSL/TLS configuration if required
+  </Accordion>
+
+  <Accordion title="Authentication doesn't work">
+    - Check `BETTER_AUTH_SECRET` is set
+    - Verify OAuth redirect URLs match deployment URL
+    - Ensure OAuth credentials are correct
+    - Check `trustedOrigins` in auth configuration
+  </Accordion>
+
+  <Accordion title="Images not loading">
+    - Check image remote patterns in `next.config.ts`
+    - Verify external image sources are allowed
+    - Ensure CDN/blob storage is accessible
+  </Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+- [Configure environment variables](/guides/environment-variables)
+- [Set up authentication](/guides/authentication)
+- [Configure application settings](/guides/configuration)

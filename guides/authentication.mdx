@@ -1,0 +1,411 @@
+---
+title: "Authentication"
+description: "Set up authentication providers"
+---
+
+Scira uses **Better Auth** for authentication, supporting multiple OAuth providers including GitHub, Google, and Twitter/X. This guide covers setting up authentication providers and managing user sessions.
+
+## Better Auth Integration
+
+Better Auth is a modern authentication library that provides:
+- Multiple OAuth provider support
+- Session management
+- Rate limiting
+- Secure cookie handling
+- Database integration via Drizzle ORM
+
+### Authentication Configuration
+
+The main authentication configuration is in `lib/auth.ts`:
+
+```typescript
+import { betterAuth } from 'better-auth/minimal';
+import { nextCookies } from 'better-auth/next-js';
+import { drizzleAdapter } from 'better-auth/adapters/drizzle';
+
+export const auth = betterAuth({
+  rateLimit: {
+    max: 100,
+    window: 60,
+  },
+  experimental: { joins: true },
+  database: drizzleAdapter(db, {
+    provider: 'pg',
+    schema: {
+      user,
+      session,
+      verification,
+      account,
+      // ... other tables
+    },
+  }),
+  socialProviders: {
+    github: {
+      clientId: serverEnv.GITHUB_CLIENT_ID,
+      clientSecret: serverEnv.GITHUB_CLIENT_SECRET,
+    },
+    google: {
+      clientId: serverEnv.GOOGLE_CLIENT_ID,
+      clientSecret: serverEnv.GOOGLE_CLIENT_SECRET,
+    },
+    twitter: {
+      clientId: serverEnv.TWITTER_CLIENT_ID,
+      clientSecret: serverEnv.TWITTER_CLIENT_SECRET,
+    },
+  },
+  trustedOrigins: [
+    'http://localhost:3000',
+    'https://scira.ai',
+    'https://www.scira.ai'
+  ],
+  plugins: [lastLoginMethod(), nextCookies()],
+});
+```
+
+## Supported Providers
+
+Scira supports three OAuth providers out of the box:
+
+<CardGroup cols={3}>
+  <Card title="GitHub" icon="github">
+    Sign in with GitHub account
+  </Card>
+  <Card title="Google" icon="google">
+    Sign in with Google account
+  </Card>
+  <Card title="Twitter/X" icon="x-twitter">
+    Sign in with Twitter/X account
+  </Card>
+</CardGroup>
+
+## OAuth Setup Instructions
+
+### GitHub OAuth
+
+<Steps>
+  <Step title="Create a GitHub OAuth App">
+    1. Go to [GitHub Developer Settings](https://github.com/settings/developers)
+    2. Click **"New OAuth App"**
+    3. Fill in the application details:
+       - **Application name**: `Scira` (or your app name)
+       - **Homepage URL**: `https://yourdomain.com`
+       - **Authorization callback URL**: `https://yourdomain.com/api/auth/callback/github`
+    4. Click **"Register application"**
+  </Step>
+
+  <Step title="Get Client ID and Secret">
+    After creating the app:
+    1. Copy the **Client ID**
+    2. Click **"Generate a new client secret"**
+    3. Copy the **Client Secret** (it won't be shown again)
+  </Step>
+
+  <Step title="Configure environment variables">
+    Add the credentials to your `.env.local` or `.env` file:
+
+    ```bash
+    GITHUB_CLIENT_ID=your_github_client_id
+    GITHUB_CLIENT_SECRET=your_github_client_secret
+    ```
+  </Step>
+</Steps>
+
+### Google OAuth
+
+<Steps>
+  <Step title="Create a Google Cloud Project">
+    1. Go to [Google Cloud Console](https://console.cloud.google.com)
+    2. Create a new project or select an existing one
+    3. Enable the **Google+ API** for your project
+  </Step>
+
+  <Step title="Create OAuth 2.0 Credentials">
+    1. Navigate to **APIs & Services** → **Credentials**
+    2. Click **"Create Credentials"** → **"OAuth client ID"**
+    3. Configure the consent screen if prompted
+    4. Select **"Web application"** as the application type
+    5. Add authorized redirect URIs:
+       - `https://yourdomain.com/api/auth/callback/google`
+       - For local development: `http://localhost:3000/api/auth/callback/google`
+    6. Click **"Create"**
+  </Step>
+
+  <Step title="Get Client ID and Secret">
+    After creating the credentials:
+    1. Copy the **Client ID**
+    2. Copy the **Client Secret**
+  </Step>
+
+  <Step title="Configure environment variables">
+    Add the credentials to your `.env.local` or `.env` file:
+
+    ```bash
+    GOOGLE_CLIENT_ID=your_google_client_id.apps.googleusercontent.com
+    GOOGLE_CLIENT_SECRET=your_google_client_secret
+    ```
+  </Step>
+</Steps>
+
+### Twitter/X OAuth
+
+<Steps>
+  <Step title="Create a Twitter App">
+    1. Go to [Twitter Developer Portal](https://developer.twitter.com/en/portal/projects-and-apps)
+    2. Create a new project or select an existing one
+    3. Create a new app within the project
+  </Step>
+
+  <Step title="Configure OAuth 2.0">
+    1. Navigate to your app's settings
+    2. Enable **OAuth 2.0**
+    3. Set the **Type of App** to **"Web App"**
+    4. Add **Callback URLs**:
+       - `https://yourdomain.com/api/auth/callback/twitter`
+       - For local development: `http://localhost:3000/api/auth/callback/twitter`
+    5. Add **Website URL**: `https://yourdomain.com`
+  </Step>
+
+  <Step title="Get Client ID and Secret">
+    From the app settings:
+    1. Copy the **Client ID** (OAuth 2.0)
+    2. Copy the **Client Secret** (OAuth 2.0)
+    
+    <Warning>
+      Use OAuth 2.0 credentials, not OAuth 1.0a API keys.
+    </Warning>
+  </Step>
+
+  <Step title="Configure environment variables">
+    Add the credentials to your `.env.local` or `.env` file:
+
+    ```bash
+    TWITTER_CLIENT_ID=your_twitter_client_id
+    TWITTER_CLIENT_SECRET=your_twitter_client_secret
+    ```
+  </Step>
+</Steps>
+
+## Session Management
+
+Better Auth handles session management automatically with secure, HTTP-only cookies.
+
+### Session Schema
+
+From `lib/db/schema.ts`:
+
+```typescript
+export const session = pgTable(
+  'session',
+  {
+    id: text('id').primaryKey(),
+    expiresAt: timestamp('expires_at').notNull(),
+    token: text('token').notNull().unique(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at')
+      .$onUpdate(() => new Date())
+      .notNull(),
+    ipAddress: text('ip_address'),
+    userAgent: text('user_agent'),
+    userId: text('user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+  },
+  (table) => [index('session_userId_idx').on(table.userId)],
+);
+```
+
+### Session Features
+
+- **Automatic expiration** - Sessions expire based on `expiresAt` timestamp
+- **Token-based** - Unique token for each session
+- **IP tracking** - Stores IP address for security monitoring
+- **User agent tracking** - Records browser/device information
+- **Cascade deletion** - Sessions are deleted when user is deleted
+
+## User Schema
+
+User accounts are stored in the `user` table:
+
+```typescript
+export const user = pgTable('user', {
+  id: text('id').primaryKey(),
+  name: text('name').notNull(),
+  email: text('email').notNull().unique(),
+  emailVerified: boolean('email_verified').default(false).notNull(),
+  image: text('image'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at')
+    .defaultNow()
+    .$onUpdate(() => new Date())
+    .notNull(),
+});
+```
+
+## Account Schema
+
+OAuth provider accounts are linked to users via the `account` table:
+
+```typescript
+export const account = pgTable(
+  'account',
+  {
+    id: text('id').primaryKey(),
+    accountId: text('account_id').notNull(),
+    providerId: text('provider_id').notNull(),
+    userId: text('user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    accessToken: text('access_token'),
+    refreshToken: text('refresh_token'),
+    idToken: text('id_token'),
+    accessTokenExpiresAt: timestamp('access_token_expires_at'),
+    refreshTokenExpiresAt: timestamp('refresh_token_expires_at'),
+    scope: text('scope'),
+    password: text('password'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at')
+      .$onUpdate(() => new Date())
+      .notNull(),
+  },
+  (table) => [index('account_userId_idx').on(table.userId)],
+);
+```
+
+### Account Features
+
+- **Multi-provider support** - Users can link multiple OAuth providers
+- **Token management** - Stores access and refresh tokens
+- **Token expiration** - Tracks token expiration times
+- **Scope tracking** - Records OAuth scopes granted
+
+## Rate Limiting
+
+Better Auth includes built-in rate limiting:
+
+```typescript
+rateLimit: {
+  max: 100,      // Maximum requests
+  window: 60,    // Time window in seconds
+}
+```
+
+This prevents brute force attacks by limiting authentication attempts.
+
+## Trusted Origins
+
+Configure trusted origins for CORS and cookie security:
+
+```typescript
+trustedOrigins: [
+  'http://localhost:3000',
+  'https://scira.ai',
+  'https://www.scira.ai'
+],
+allowedOrigins: [
+  'http://localhost:3000',
+  'https://scira.ai',
+  'https://www.scira.ai'
+]
+```
+
+<Warning>
+  **Important**: Update these arrays to include your production domain when deploying.
+</Warning>
+
+## Security Considerations
+
+<CardGroup cols={2}>
+  <Card title="Use HTTPS" icon="lock">
+    Always use HTTPS in production for secure cookie transmission
+  </Card>
+  <Card title="Secure secrets" icon="key">
+    Keep `BETTER_AUTH_SECRET` and OAuth secrets secure
+  </Card>
+  <Card title="Validate redirects" icon="shield-check">
+    Only allow redirects to trusted origins
+  </Card>
+  <Card title="Monitor sessions" icon="eye">
+    Track IP addresses and user agents for anomaly detection
+  </Card>
+</CardGroup>
+
+### Environment Variables
+
+Ensure you have configured the authentication secret:
+
+```bash
+BETTER_AUTH_SECRET=your-generated-secret-here
+```
+
+Generate a secure secret:
+
+```bash
+openssl rand -base64 32
+```
+
+<Warning>
+  Never commit `BETTER_AUTH_SECRET` to version control or expose it publicly.
+</Warning>
+
+## Testing Authentication
+
+### Local Development
+
+1. Ensure OAuth apps have `http://localhost:3000/api/auth/callback/{provider}` in their callback URLs
+2. Configure environment variables in `.env.local`
+3. Start the development server:
+   ```bash
+   pnpm dev
+   ```
+4. Navigate to `http://localhost:3000` and test sign-in
+
+### Production
+
+1. Update OAuth app callback URLs to your production domain
+2. Configure production environment variables
+3. Verify `trustedOrigins` includes your production domain
+4. Test authentication flow in production
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="OAuth redirect URI mismatch">
+    Ensure the callback URL in your OAuth app settings exactly matches:
+    ```
+    https://yourdomain.com/api/auth/callback/{provider}
+    ```
+    
+    Common issues:
+    - Missing trailing slash
+    - HTTP vs HTTPS mismatch
+    - Wrong subdomain (www vs non-www)
+  </Accordion>
+
+  <Accordion title="Session not persisting">
+    Check:
+    - `BETTER_AUTH_SECRET` is set
+    - Cookies are enabled in browser
+    - Domain is in `trustedOrigins`
+    - HTTPS is enabled in production
+  </Accordion>
+
+  <Accordion title="Database connection errors">
+    Verify:
+    - `DATABASE_URL` is correct
+    - Database migrations have been run
+    - User, session, and account tables exist
+  </Accordion>
+
+  <Accordion title="Rate limit errors">
+    If you're hitting rate limits during testing:
+    - Increase `max` in rate limit configuration
+    - Clear Redis cache
+    - Wait for the rate limit window to expire
+  </Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+- [Configure environment variables](/guides/environment-variables)
+- [Set up database](/guides/self-hosting#database-setup)
+- [Deploy to production](/guides/deployment)

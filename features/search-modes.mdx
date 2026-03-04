@@ -1,0 +1,456 @@
+---
+title: "Search modes"
+description: "17 specialized search modes for different research needs"
+---
+
+Scira offers 17 specialized search modes, each optimized for different types of research. The platform automatically selects the best mode based on your query, or you can manually choose one.
+
+## General Research
+
+<AccordionGroup>
+  <Accordion title="Web" icon="globe" defaultOpen>
+    **Purpose**: Search the entire web with AI-powered analysis
+    
+    The default mode for general research questions. Uses multiple search providers (Exa, Parallel, Tavily, Firecrawl) with intelligent deduplication and ranking.
+    
+    **When to use:**
+    - General research questions
+    - Current events and news
+    - Product reviews and comparisons
+    - How-to guides and tutorials
+    
+    **Example queries:**
+    - "What are the latest developments in renewable energy?"
+    - "Compare the top 5 project management tools"
+    - "How does photosynthesis work?"
+    
+    **Features:**
+    - Multi-query parallel search (5-10 queries)
+    - Image search integration
+    - Date/time context awareness
+    - Source diversity and deduplication
+  </Accordion>
+
+  <Accordion title="Chat" icon="message">
+    **Purpose**: Talk to the model directly, no search
+    
+    Pure conversational AI without web search. Useful for creative tasks, brainstorming, code generation, or questions that don't require real-time data.
+    
+    **When to use:**
+    - Creative writing and brainstorming
+    - Code generation and debugging
+    - Mathematical calculations
+    - General knowledge questions
+    
+    **Example queries:**
+    - "Write a poem about artificial intelligence"
+    - "Debug this Python function"
+    - "Explain quantum entanglement simply"
+    
+    **Features:**
+    - Direct model access
+    - No search overhead
+    - Faster responses
+    - Best for well-defined problems
+  </Accordion>
+
+  <Accordion title="Extreme" icon="bolt">
+    **Purpose**: Deep research with multiple sources and multi-step analysis
+    
+    Autonomous research agent that plans research strategy, executes searches, analyzes findings, and can run Python code for data analysis and visualizations.
+    
+    **When to use:**
+    - Complex research requiring multiple perspectives
+    - In-depth market analysis
+    - Technical deep-dives
+    - Research requiring data analysis or charts
+    
+    **Example queries:**
+    - "Analyze the competitive landscape of AI chip manufacturers"
+    - "Deep dive into the economics of sustainable aviation fuel"
+    - "Compare battery technologies for electric vehicles with cost projections"
+    
+    **Features:**
+    - Autonomous research planning (3-5 research phases)
+    - Web and X search integration
+    - Python code execution with chart generation
+    - Multi-step reasoning and cross-validation
+    - Source collection and content extraction
+    - Configurable provider (Exa or Parallel)
+    
+    **Technical details:**
+    - Uses Grok 4 for planning and execution
+    - Sandboxed Python environment via Daytona
+    - R2 artifact storage for charts
+    - Step limit: 15-17 actions
+  </Accordion>
+</AccordionGroup>
+
+## Academic & Technical
+
+<AccordionGroup>
+  <Accordion title="Academic" icon="graduation-cap">
+    **Purpose**: Research papers, citations, and scholarly sources
+    
+    Specialized search for peer-reviewed papers, academic publications, and scholarly articles. Uses Exa and Firecrawl with category filtering.
+    
+    **When to use:**
+    - Literature reviews
+    - Scientific research
+    - Citation discovery
+    - Academic writing support
+    
+    **Example queries:**
+    - "Recent papers on CRISPR gene editing in 2025"
+    - "Literature review on transformer architectures in NLP"
+    - "Academic research on climate change mitigation strategies"
+    
+    **Features:**
+    - Peer-reviewed source prioritization
+    - Citation extraction
+    - Author and publication metadata
+    - DOI and arXiv integration
+  </Accordion>
+
+  <Accordion title="Code" icon="code">
+    **Purpose**: Get context about languages, frameworks, and programming topics
+    
+    Uses Exa's Context API to retrieve relevant programming documentation, examples, and best practices.
+    
+    **When to use:**
+    - Learning new frameworks
+    - API documentation lookup
+    - Best practices research
+    - Code examples and patterns
+    
+    **Example queries:**
+    - "How to implement authentication in Next.js 15?"
+    - "React Server Components best practices"
+    - "Python asyncio patterns for concurrent API calls"
+    
+    **Features:**
+    - Developer-focused content
+    - Code snippet extraction
+    - Documentation prioritization
+    - Stack Overflow and GitHub integration
+  </Accordion>
+
+  <Accordion title="GitHub" icon="github">
+    **Purpose**: Repositories, code, and developer discussions
+    
+    Search GitHub repositories with structured metadata extraction using Firecrawl.
+    
+    **When to use:**
+    - Finding open source libraries
+    - Exploring implementation examples
+    - Researching project architecture
+    - Discovering developer tools
+    
+    **Example queries:**
+    - "Best TypeScript state management libraries"
+    - "Redis caching implementations in Go"
+    - "React component libraries for dashboards"
+    
+    **Features:**
+    - Repository metadata (stars, forks, issues)
+    - README extraction
+    - License and dependency information
+    - Recent activity and commit history
+  </Accordion>
+</AccordionGroup>
+
+## Social & Community
+
+<AccordionGroup>
+  <Accordion title="X" icon="x-twitter">
+    **Purpose**: Real-time posts, trends, and conversations from X (Twitter)
+    
+    Search recent posts and discussions on X using xAI Grok's native X search integration.
+    
+    **When to use:**
+    - Breaking news and real-time updates
+    - Public sentiment analysis
+    - Trending topic discovery
+    - Expert opinions and discussions
+    
+    **Example queries:**
+    - "What are developers saying about the new GPT release?"
+    - "Public reaction to latest Fed decision"
+    - "AI safety discussions from researchers"
+    
+    **Features:**
+    - Date range filtering
+    - Handle-specific search (include/exclude)
+    - Real-time post retrieval
+    - Tweet metadata and engagement stats
+    - Full conversation threads
+  </Accordion>
+
+  <Accordion title="Reddit" icon="reddit">
+    **Purpose**: Discussions, opinions, and community insights
+    
+    Search Reddit with configurable time ranges using Parallel API.
+    
+    **When to use:**
+    - Product reviews and recommendations
+    - Community opinions and experiences
+    - Troubleshooting and support
+    - Niche topic discussions
+    
+    **Example queries:**
+    - "Best mechanical keyboards under $200 according to Reddit"
+    - "r/MachineLearning discussions on LLM fine-tuning"
+    - "Home gym setup recommendations from fitness communities"
+    
+    **Features:**
+    - Subreddit-specific search
+    - Time range filtering
+    - Comment and discussion threads
+    - Upvote and engagement metrics
+  </Accordion>
+
+  <Accordion title="YouTube" icon="youtube">
+    **Purpose**: Video summaries, transcripts, and analysis
+    
+    Search videos, channels, and playlists with transcript extraction using Supadata.
+    
+    **When to use:**
+    - Tutorial and educational content
+    - Video research and analysis
+    - Transcript search
+    - Content creator discovery
+    
+    **Example queries:**
+    - "Best Python tutorials for beginners"
+    - "TED talks on artificial intelligence"
+    - "Cooking channels for healthy meal prep"
+    
+    **Features:**
+    - Video metadata (views, duration, upload date)
+    - Transcript extraction and search
+    - Channel information
+    - Playlist organization
+  </Accordion>
+</AccordionGroup>
+
+## Finance & Markets
+
+<AccordionGroup>
+  <Accordion title="Stocks" icon="chart-line">
+    **Purpose**: Market data, charts, and financial analysis
+    
+    Interactive stock charts with OHLC data, earnings, SEC filings, and financial news. Powered by Valyu, Tavily, and Exa.
+    
+    **When to use:**
+    - Stock price research
+    - Company financial analysis
+    - Earnings report summaries
+    - Market trend analysis
+    
+    **Example queries:**
+    - "Tesla stock performance last 6 months with earnings data"
+    - "Compare NVIDIA vs AMD stock with latest news"
+    - "Apple 10-K filing analysis for 2024"
+    
+    **Features:**
+    - Natural language company resolution
+    - OHLC candlestick charts
+    - SEC filing retrieval (10-K, 10-Q, 8-K)
+    - Balance sheets and income statements (2020+)
+    - Financial statistics (P/E, market cap, debt ratios)
+    - Multi-source news aggregation
+  </Accordion>
+
+  <Accordion title="Crypto" icon="bitcoin">
+    **Purpose**: Cryptocurrency research powered by CoinGecko
+    
+    Comprehensive crypto data including market prices, contract lookups, OHLC charts, and token metadata.
+    
+    **When to use:**
+    - Crypto price research
+    - Token contract verification
+    - Market cap and volume analysis
+    - DeFi protocol research
+    
+    **Example queries:**
+    - "Bitcoin price analysis last 30 days"
+    - "Top DeFi tokens by market cap"
+    - "Solana ecosystem token data"
+    
+    **Features:**
+    - CoinGecko API integration
+    - Contract address lookup
+    - OHLC chart data
+    - Market metadata (volume, supply, market cap)
+    - Community and developer stats
+  </Accordion>
+
+  <Accordion title="Prediction" icon="crystal-ball">
+    **Purpose**: Prediction markets from Polymarket and Kalshi
+    
+    Query prediction market data with Cohere reranking for relevant market discovery.
+    
+    **When to use:**
+    - Election forecasts
+    - Economic event predictions
+    - Sports betting markets
+    - Future event probabilities
+    
+    **Example queries:**
+    - "2026 midterm election prediction markets"
+    - "Fed rate decision probabilities"
+    - "Super Bowl winner odds on prediction markets"
+    
+    **Features:**
+    - Polymarket integration
+    - Kalshi regulated markets
+    - Probability tracking
+    - Market volume and liquidity
+  </Accordion>
+</AccordionGroup>
+
+## Media & Entertainment
+
+<AccordionGroup>
+  <Accordion title="Spotify" icon="spotify">
+    **Purpose**: Search songs, artists, and albums
+    
+    Search music catalog via Spotify Web API with track, artist, album, and playlist discovery.
+    
+    **When to use:**
+    - Music discovery
+    - Playlist recommendations
+    - Artist discography lookup
+    - Song information
+    
+    **Example queries:**
+    - "Best indie rock albums of 2025"
+    - "Taylor Swift complete discography"
+    - "Workout playlists with high BPM"
+    
+    **Features:**
+    - Track search with metadata
+    - Artist information and discography
+    - Album details and tracklists
+    - Playlist discovery
+  </Accordion>
+</AccordionGroup>
+
+## Pro Features
+
+<AccordionGroup>
+  <Accordion title="Connectors" icon="plug">
+    <Info>**Pro feature** - Requires Scira Pro subscription</Info>
+    
+    **Purpose**: Search Google Drive, Notion & OneDrive
+    
+    Unified search across connected cloud apps using Supermemory integration.
+    
+    **When to use:**
+    - Personal knowledge base search
+    - Document retrieval from connected apps
+    - Cross-platform content discovery
+    
+    **Example queries:**
+    - "Find my notes about Q4 planning"
+    - "Documents mentioning the Acme project"
+    - "Presentations from last quarter"
+    
+    **Features:**
+    - Google Drive integration
+    - Notion workspace search
+    - OneDrive file access
+    - Semantic search with embeddings
+  </Accordion>
+
+  <Accordion title="Memory" icon="brain-circuit">
+    <Info>**Pro feature** - Requires Scira Pro subscription</Info>
+    
+    **Purpose**: Your personal memory companion
+    
+    Persistent memory system that saves and recalls information across conversations using Supermemory.
+    
+    **When to use:**
+    - Storing personal preferences
+    - Remembering past conversations
+    - Building personal knowledge graphs
+    - Context retention across sessions
+    
+    **Example queries:**
+    - "Remember that I prefer Python over JavaScript"
+    - "What did we discuss about the marketing campaign?"
+    - "Save this as a reference for my project"
+    
+    **Features:**
+    - Long-term memory storage
+    - Semantic memory retrieval
+    - Cross-conversation context
+    - Personal knowledge management
+  </Accordion>
+
+  <Accordion title="Voice" icon="microphone">
+    <Info>**Pro feature** - Requires Scira Pro subscription</Info>
+    
+    **Purpose**: Conversational AI with real-time voice
+    
+    Real-time voice interaction with AI using ElevenLabs voice synthesis.
+    
+    **When to use:**
+    - Hands-free research
+    - Voice conversations
+    - Accessibility needs
+    - Natural dialogue
+    
+    **Features:**
+    - Real-time voice streaming
+    - Natural conversation flow
+    - ElevenLabs voice quality
+    - Interrupt and clarification support
+  </Accordion>
+
+  <Accordion title="XQL" icon="database">
+    <Info>**Pro feature** - Requires Scira Pro subscription</Info>
+    
+    **Purpose**: Advanced X query language for tweet analysis
+    
+    Structured query language for advanced X (Twitter) searches with complex filters.
+    
+    **When to use:**
+    - Advanced social media research
+    - Structured tweet analysis
+    - Complex query combinations
+    - Programmatic X data extraction
+    
+    **Features:**
+    - XQL syntax support
+    - Advanced filtering
+    - Programmatic queries
+    - Batch analysis capabilities
+  </Accordion>
+</AccordionGroup>
+
+## Choosing the Right Mode
+
+**Let Scira decide**: In most cases, Scira will automatically select the best mode based on your query.
+
+**Manual selection**: Choose a mode when you have specific requirements:
+
+- **General research** → Web mode
+- **Deep analysis** → Extreme mode
+- **Academic citations** → Academic mode
+- **Real-time trends** → X or Reddit mode
+- **Financial data** → Stocks or Crypto mode
+- **Media discovery** → YouTube or Spotify mode
+- **Personal knowledge** → Connectors or Memory mode (Pro)
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Explore Tools" icon="wrench" href="/features/tools">
+    Learn about the 28 integrated tools available across modes
+  </Card>
+  
+  <Card title="AI Models" icon="sparkles" href="/features/ai-models">
+    Discover 100+ supported AI models from major providers
+  </Card>
+</CardGroup>
